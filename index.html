@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Precast Carpentry Shop Cut List & Print Analyzer</title>
-  <!-- Tesseract.js for offline/client OCR print reading -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     :root {
@@ -20,7 +19,7 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
     body { background: var(--bg-dark); color: var(--text); padding: 16px; font-size: 14px; }
-    .header { display: flex; justify-content: space-between; align-items: center; border-b: 2px solid var(--border); padding-bottom: 12px; margin-bottom: 16px; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 12px; margin-bottom: 16px; }
     .header h1 { font-size: 1.4rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
@@ -67,15 +66,13 @@
   <div class="header no-print">
     <div>
       <h1>Precast Shop Carpentry Engine</h1>
-      <span style="color: var(--text-muted); font-size: 0.85rem;">2x12 Rip: 10.38" | 0.75" Plywood Custom Dividers | Box Openings</span>
+      <span style="color: var(--text-muted); font-size: 0.85rem;">2x12 Rip: 10.38" (+3.25" Top/Bottom Cap) | 0.75" Plywood Custom Dividers (10.5" Form Depth)</span>
     </div>
     <button class="btn btn-secondary" onclick="window.print()">Print Cut Sheet</button>
   </div>
 
   <div class="grid">
-    <!-- Left Column: Input & Print Scanning -->
     <div>
-      <!-- OCR & Camera Module -->
       <div class="card no-print">
         <h2>Job Print Scanner / Photo Input</h2>
         <div class="ocr-box" onclick="document.getElementById('fileInput').click()">
@@ -91,7 +88,6 @@
         <button class="btn btn-secondary btn-block" onclick="parseOcrTextToInputs()">Auto-Fill From Scanned Text</button>
       </div>
 
-      <!-- Manual / Override Entry Form -->
       <div class="card no-print">
         <h2>Add Opening / Divider</h2>
         
@@ -105,20 +101,19 @@
           </div>
           <div class="form-group">
             <label>Mark / Identifier</label>
-            <input type="text" id="itemMark" placeholder="e.g., W-101, DIV-A">
+            <input type="text" id="itemMark" placeholder="e.g., W-101, 13F, DIV-A">
           </div>
         </div>
 
-        <!-- Box Opening Inputs -->
         <div id="openingFields">
           <div class="row">
             <div class="form-group">
               <label>Inside Width (Inches)</label>
-              <input type="number" step="0.0625" id="openWidth" placeholder="e.g., 36.0 or 36.5">
+              <input type="number" step="0.0625" id="openWidth" placeholder="e.g., 36.0 or 37.0">
             </div>
             <div class="form-group">
               <label>Inside Height (Inches)</label>
-              <input type="number" step="0.0625" id="openHeight" placeholder="e.g., 48.0">
+              <input type="number" step="0.0625" id="openHeight" placeholder="e.g., 60.0 or 63.0">
             </div>
           </div>
           <div class="row">
@@ -136,23 +131,33 @@
           </div>
         </div>
 
-        <!-- Custom Divider Inputs -->
         <div id="dividerFields" style="display: none;">
           <div class="row">
             <div class="form-group">
-              <label>Divider Length / Run (Inches)</label>
-              <input type="number" step="0.0625" id="divLength" placeholder="Total Length">
+              <label>Panel Length / Cut Length (Inches)</label>
+              <input type="number" step="0.0625" id="divPanelHeight" placeholder="e.g., 120 or 68.5 (5'-8 1/2&quot;)">
             </div>
             <div class="form-group">
-              <label>Start Height / Width (Inches)</label>
-              <input type="number" step="0.0625" id="divStartHeight" placeholder="Height at start">
+              <label>Form Depth (Side A - Fixed)</label>
+              <input type="number" step="0.0625" id="divFormDepth" value="10.5">
             </div>
           </div>
           <div class="row">
             <div class="form-group">
-              <label>End Height / Width (Inches)</label>
-              <input type="number" step="0.0625" id="divEndHeight" placeholder="Height at end (same if square)">
+              <label>Slope Offset / Difference (Side B - &Delta; Inches)</label>
+              <input type="number" step="0.0625" id="divSlopeOffset" placeholder="e.g., 8.75 or 2.0625 (2 1/16&quot;)">
             </div>
+            <div class="form-group">
+              <label>Angle Mode / Override</label>
+              <select id="divAnglePreset" onchange="handleAnglePresetChange()">
+                <option value="calc">Calculate from Offset (Side B)</option>
+                <option value="45">45° Divider (Standard - 10.5" Offset)</option>
+                <option value="22.5">22.5° Divider (4 3/8" Offset)</option>
+                <option value="78.75">78.75° Base / 11.25° Saw (2 1/16" Offset)</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
             <div class="form-group">
               <label>Plywood Thickness</label>
               <input type="number" step="0.01" id="divThickness" value="0.75">
@@ -169,7 +174,6 @@
       </div>
     </div>
 
-    <!-- Right Column: Live Master Cut Sheet -->
     <div>
       <div class="card print-target">
         <h2>Saw Master Cut List</h2>
@@ -182,16 +186,15 @@
                 <th>Mark</th>
                 <th>Qty</th>
                 <th>Material</th>
-                <th>Width</th>
+                <th>Ripped Width</th>
                 <th>Cut Length</th>
-                <th>Bevel / Angles</th>
+                <th>Saw Bevel / Angle</th>
                 <th>Description / Placement</th>
                 <th class="no-print">Action</th>
               </tr>
             </thead>
             <tbody id="cutListBody">
-              <!-- Dynamically rendered cut pieces -->
-            </tbody>
+              </tbody>
           </table>
         </div>
 
@@ -204,14 +207,26 @@
   </div>
 
   <script>
-    // State management
     let cutItems = [];
-    const LUMBER_ACTUAL_THICKNESS = 1.5; // Standard 2x lumber actual thickness
+    const HEADER_CAP_OVERAGE = 3.25; // Top/Bottom headers are +3.25" over inside width
 
     function toggleItemFields() {
       const type = document.getElementById('itemType').value;
       document.getElementById('openingFields').style.display = type === 'window_door' ? 'block' : 'none';
       document.getElementById('dividerFields').style.display = type === 'divider' ? 'block' : 'none';
+    }
+
+    function handleAnglePresetChange() {
+      const preset = document.getElementById('divAnglePreset').value;
+      const depth = parseFloat(document.getElementById('divFormDepth').value) || 10.5;
+      
+      if (preset === '45') {
+        document.getElementById('divSlopeOffset').value = depth.toFixed(4); // 10.5" for 45 deg
+      } else if (preset === '22.5') {
+        document.getElementById('divSlopeOffset').value = "4.375"; // 4 3/8"
+      } else if (preset === '78.75') {
+        document.getElementById('divSlopeOffset').value = "2.0625"; // 2 1/16"
+      }
     }
 
     // Convert decimal inches to fractional string (nearest 1/16")
@@ -233,6 +248,36 @@
       return whole > 0 ? `${whole} ${num}/${den}"` : `${num}/${den}"`;
     }
 
+    // Helper to parse imperial strings (e.g. 5'-8 1/2", 37", 2 1/16) to decimal
+    function parseImperialToInches(str) {
+      if (!str) return null;
+      str = str.trim().replace(/["']/g, '');
+      
+      if (str.includes('-')) {
+        const parts = str.split('-');
+        const feet = parseFloat(parts[0]) || 0;
+        const inches = parseFractionString(parts[1]) || 0;
+        return (feet * 12) + inches;
+      }
+      return parseFractionString(str);
+    }
+
+    function parseFractionString(str) {
+      if (!str) return 0;
+      str = str.trim();
+      const spaceSplit = str.split(/\s+/);
+      if (spaceSplit.length === 2) {
+        const whole = parseFloat(spaceSplit[0]) || 0;
+        const fracParts = spaceSplit[1].split('/');
+        const frac = fracParts.length === 2 ? (parseFloat(fracParts[0]) / parseFloat(fracParts[1])) : 0;
+        return whole + frac;
+      } else if (str.includes('/')) {
+        const fracParts = str.split('/');
+        return fracParts.length === 2 ? (parseFloat(fracParts[0]) / parseFloat(fracParts[1])) : 0;
+      }
+      return parseFloat(str) || 0;
+    }
+
     // Process OCR via Tesseract.js
     async function handleImageUpload(e) {
       const file = e.target.files[0];
@@ -243,7 +288,7 @@
       preview.style.display = 'block';
 
       const status = document.getElementById('ocrStatus');
-      status.innerText = "Analyzing print for dimensions & angles...";
+      status.innerText = "Analyzing print for dimensions, offsets & angles...";
 
       try {
         const worker = await Tesseract.createWorker('eng');
@@ -257,25 +302,45 @@
       }
     }
 
-    // Basic heuristic parser for typical precast drawings
+    // Advanced Parser for Precast Prints
     function parseOcrTextToInputs() {
       const text = document.getElementById('rawOcrText').value;
       if (!text) return;
 
-      // Search for patterns like 36x48, 36" x 48", 36 1/2, or specific tags
-      const dimRegex = /(\d+(\.\d+)?)\s*["']?\s*[xX]\s*(\d+(\.\d+)?)/;
-      const match = text.match(dimRegex);
+      // Check for offset patterns like 2 1/16, 4 3/8, 8.75
+      const offsetMatch = text.match(/(?:offset|diff)?\s*(\d+[\s\-_]+(?:\d+\/\d+))\s*["']?/i);
+      const angleMatch = text.match(/(\d+(?:\.\d+)?)\s*°/i) || text.match(/(78\.75|22\.5|45)/);
 
-      if (match) {
-        document.getElementById('openWidth').value = match[1];
-        document.getElementById('openHeight').value = match[3];
-        document.getElementById('itemMark').value = "SCAN-" + Math.floor(Math.random() * 900 + 100);
+      // Check for opening patterns like 37" x 63" or 3'-0 1/2" x 5'-3"
+      const openingMatch = text.match(/(\d+[\d\s\/\.'"-]*)\s*[xX]\s*(\d+[\d\s\/\.'"-]*)/);
+
+      if (openingMatch) {
+        const w = parseImperialToInches(openingMatch[1]);
+        const h = parseImperialToInches(openingMatch[2]);
+        if (w > 0 && h > 0) {
+          document.getElementById('itemType').value = 'window_door';
+          toggleItemFields();
+          document.getElementById('openWidth').value = w;
+          document.getElementById('openHeight').value = h;
+          document.getElementById('itemMark').value = "OP-" + Math.floor(Math.random() * 900 + 100);
+          return;
+        }
       }
 
-      // Check for divider or angled indicators
-      if (/divider|plywood|slope|deg|angle/i.test(text)) {
+      if (offsetMatch || angleMatch || /divider|slope/i.test(text)) {
         document.getElementById('itemType').value = 'divider';
         toggleItemFields();
+        if (offsetMatch) {
+          document.getElementById('divSlopeOffset').value = parseImperialToInches(offsetMatch[1]);
+        }
+        if (angleMatch) {
+          const deg = angleMatch[1];
+          if (deg.includes('78.75')) document.getElementById('divAnglePreset').value = '78.75';
+          else if (deg.includes('22.5')) document.getElementById('divAnglePreset').value = '22.5';
+          else if (deg.includes('45')) document.getElementById('divAnglePreset').value = '45';
+          handleAnglePresetChange();
+        }
+        document.getElementById('itemMark').value = "DIV-" + Math.floor(Math.random() * 900 + 100);
       }
     }
 
@@ -295,13 +360,12 @@
           return;
         }
 
-        // Inside Clear Dimension Box Construction:
-        // Top and Bottom run the inside width.
-        // Left and Right sides = inside height + (2 * 1.5") to cap the top & bottom.
-        const horizCut = w;
-        const vertCut = h + (2 * LUMBER_ACTUAL_THICKNESS);
+        // Shop Rule: Top & Bottom Headers are Inside Width + 3.25"
+        const headerCut = w + HEADER_CAP_OVERAGE;
+        // Shop Rule: Vertical Jambs are exact Inside Height
+        const jambCut = h;
 
-        // Add Horizontal headers/sills (2 per box * qty)
+        // Top and Bottom Headers (2 per box * qty)
         cutItems.push({
           id: Date.now() + 1,
           mark: mark,
@@ -309,12 +373,12 @@
           material: '2x12 Ripped',
           tagClass: 'tag-2x12',
           width: rip,
-          cutLength: horizCut,
+          cutLength: headerCut,
           angles: '90° / 90° (Square)',
-          desc: `Header & Sill (Inside Width) - ${core === 'solid_concrete' ? 'Stripped on site' : 'Standard Buck'}`
+          desc: `Top Header & Bottom Sill (Inside Width + 3 1/4" Over Cap) - ${core === 'solid_concrete' ? 'Stripped on site' : 'Standard Buck'}`
         });
 
-        // Add Vertical sides/jambs (2 per box * qty)
+        // Vertical Jambs / Sides (2 per box * qty)
         cutItems.push({
           id: Date.now() + 2,
           mark: mark,
@@ -322,48 +386,52 @@
           material: '2x12 Ripped',
           tagClass: 'tag-2x12',
           width: rip,
-          cutLength: vertCut,
+          cutLength: jambCut,
           angles: '90° / 90° (Square)',
-          desc: `Jambs / Sides (Inside Height + 3" Butt Cap)`
+          desc: `Vertical Side Jambs (Inside Height Square)`
         });
 
       } else {
-        // Custom Plywood Divider Engine
-        const len = parseFloat(document.getElementById('divLength').value);
-        const startH = parseFloat(document.getElementById('divStartHeight').value);
-        const endH = parseFloat(document.getElementById('divEndHeight').value);
+        // Custom 0.75" Plywood Divider Calculations
+        const panelLength = parseFloat(document.getElementById('divPanelHeight').value) || 0;
+        const sideA = parseFloat(document.getElementById('divFormDepth').value) || 10.5; // Form Depth (a = 10.5")
+        let sideB = parseFloat(document.getElementById('divSlopeOffset').value) || 0; // Offset Diff (b)
         const plyThick = parseFloat(document.getElementById('divThickness').value) || 0.75;
+        const preset = document.getElementById('divAnglePreset').value;
 
-        if (isNaN(len) || isNaN(startH) || isNaN(endH)) {
-          alert('Please enter length, start height, and end height.');
-          return;
+        if (preset === '45' && (!sideB || sideB === 0)) {
+          sideB = sideA; // 45° divider offset equals form depth
         }
 
-        const deltaH = Math.abs(endH - startH);
-        let angleDeg = 90;
-        let trueSlopeLength = len;
+        let betaAngle = 0; // Saw blade bevel angle off vertical/square
+        let alphaAngle = 90; // Base triangle angle
+        let sideC_Hypotenuse = sideA; // Ripped width for sloped board
 
-        if (deltaH > 0) {
-          // Angle of slope = arctan(rise / run)
-          const angleRad = Math.atan(deltaH / len);
-          angleDeg = (angleRad * (180 / Math.PI)).toFixed(1);
-          trueSlopeLength = Math.sqrt((len * len) + (deltaH * deltaH));
+        if (sideB > 0) {
+          // Right Triangle: tan(beta) = b / a
+          const betaRad = Math.atan(sideB / sideA);
+          betaAngle = (betaRad * (180 / Math.PI)).toFixed(1);
+          alphaAngle = (90 - betaAngle).toFixed(1);
+          
+          // Side C (Hypotenuse / Sloped Width) = sqrt(a^2 + b^2)
+          sideC_Hypotenuse = Math.sqrt((sideA * sideA) + (sideB * sideB));
         }
 
-        const angleDesc = deltaH === 0 
+        const angleDesc = sideB === 0 
           ? '90° Square Cuts' 
-          : `Miter: ${angleDeg}° | Top Slope Cut: ${toFraction(trueSlopeLength)}`;
+          : `Saw Bevel (β): ${betaAngle}° | Base (α): ${alphaAngle}°`;
 
+        // Add the primary sloped board (Area C)
         cutItems.push({
           id: Date.now(),
           mark: mark,
           qty: qty,
           material: `${plyThick}" Plywood`,
           tagClass: 'tag-plywood',
-          width: Math.max(startH, endH),
-          cutLength: len,
+          width: sideC_Hypotenuse,
+          cutLength: panelLength > 0 ? panelLength : sideC_Hypotenuse,
           angles: angleDesc,
-          desc: `Divider Panel (Start: ${toFraction(startH)}, End: ${toFraction(endH)}, Run: ${toFraction(len)})`
+          desc: `Sloped Top Cap Board (Area C: ${toFraction(sideC_Hypotenuse)} Ripped Width [${sideC_Hypotenuse.toFixed(2)}"], Form Depth: ${sideA}", Offset Diff: ${toFraction(sideB)})`
         });
       }
 
@@ -400,9 +468,9 @@
           <td><strong>${item.mark}</strong></td>
           <td><strong>${item.qty}</strong></td>
           <td><span class="tag ${item.tagClass}">${item.material}</span></td>
-          <td>${item.width.toFixed(2)}"</td>
+          <td><strong>${toFraction(item.width)}</strong> <span style="color:var(--text-muted); font-size:0.75rem;">(${item.width.toFixed(2)}")</span></td>
           <td><strong>${toFraction(item.cutLength)}</strong> <span style="color:var(--text-muted); font-size:0.75rem;">(${item.cutLength.toFixed(2)}")</span></td>
-          <td>${item.angles}</td>
+          <td><strong>${item.angles}</strong></td>
           <td>${item.desc}</td>
           <td class="no-print"><button class="btn btn-danger" style="padding: 4px 8px; font-size: 0.75rem;" onclick="removeItem(${item.id})">X</button></td>
         `;
@@ -415,9 +483,9 @@
 
     function exportCSV() {
       if (cutItems.length === 0) return alert('No cuts to export.');
-      let csv = 'Mark,Quantity,Material,Width (In),Cut Length (In),Cut Length (Fraction),Angles,Description\n';
+      let csv = 'Mark,Quantity,Material,Width (Fraction),Width (Decimal),Cut Length (Fraction),Cut Length (Decimal),Angles,Description\n';
       cutItems.forEach(i => {
-        csv += `"${i.mark}",${i.qty},"${i.material}",${i.width},${i.cutLength.toFixed(3)},"${toFraction(i.cutLength)}","${i.angles}","${i.desc}"\n`;
+        csv += `"${i.mark}",${i.qty},"${i.material}","${toFraction(i.width)}",${i.width.toFixed(3)},"${toFraction(i.cutLength)}",${i.cutLength.toFixed(3)},"${i.angles}","${i.desc}"\n`;
       });
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
