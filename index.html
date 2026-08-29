@@ -17,6 +17,7 @@
       --success: #10b981;
       --danger: #ef4444;
       --info: #3b82f6;
+      --purple: #8b5cf6;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
     body { background: var(--bg-dark); color: var(--text); padding: 16px; font-size: 14px; }
@@ -36,6 +37,10 @@
     .btn:hover { background: var(--accent-hover); }
     .btn-secondary { background: #374151; color: #fff; }
     .btn-secondary:hover { background: #4b5563; }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-success:hover { background: #059669; }
+    .btn-info { background: var(--info); color: #fff; }
+    .btn-info:hover { background: #2563eb; }
     .btn-danger { background: var(--danger); color: #fff; }
     .btn-block { width: 100%; }
     .ocr-box { border: 2px dashed var(--border); padding: 14px; text-align: center; border-radius: 6px; cursor: pointer; margin-bottom: 12px; }
@@ -54,6 +59,11 @@
     .status-bar { font-size: 0.85rem; color: var(--accent); margin-top: 4px; }
     .nesting-card { background: #13171d; border: 1px solid #2d3748; padding: 10px; border-radius: 4px; margin-bottom: 8px; font-size: 0.85rem; }
     .nesting-card strong { color: var(--accent); }
+    .inventory-badge { background: #11141a; border: 1px solid var(--border); border-radius: 4px; padding: 8px; text-align: center; }
+    .inventory-badge span { display: block; font-size: 0.75rem; color: var(--text-muted); }
+    .inventory-badge strong { font-size: 1.1rem; color: var(--accent); }
+    .scrap-tag { color: var(--danger); font-size: 0.8rem; font-weight: bold; }
+    .reusable-tag { color: var(--success); font-size: 0.8rem; font-weight: bold; }
     @media print {
       body { background: #fff; color: #000; padding: 0; }
       .no-print, .btn, .card:not(.print-target) { display: none !important; }
@@ -68,14 +78,62 @@
 
   <div class="header no-print">
     <div>
-      <h1>Precast Shop Carpentry Engine</h1>
-      <span style="color: var(--text-muted); font-size: 0.85rem;">2x12 Ripped to 10.38" (8', 10', 12' Stock) | 4'x8' 0.75" Plywood Bulkheads (10.5" Bed Depth)</span>
+      <h1>Precast Carpentry Shop Cut List & Optimizer</h1>
+      <span style="color: var(--text-muted); font-size: 0.85rem;">2x12 Ripped to 10.38" | 4'x8' 0.75" Plywood | Local Storage Stock Tracking</span>
     </div>
-    <button class="btn btn-secondary" onclick="window.print()">Print Cut Sheet</button>
+    <div style="display: flex; gap: 8px;">
+      <button class="btn btn-info" onclick="shareOrExport()">Share Cut Sheet</button>
+      <button class="btn btn-secondary" onclick="window.print()">Print</button>
+    </div>
   </div>
 
   <div class="grid">
+    <!-- Left Column: Inputs, Scanning, Inventory -->
     <div>
+      <!-- Live Shop Lumber Inventory (Stored on Phone) -->
+      <div class="card no-print">
+        <h2>Local Shop Lumber Inventory (Rack Stock)</h2>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px;">
+          <div class="inventory-badge">
+            <span>8' 2x12</span>
+            <strong id="invDisplay8">0</strong>
+          </div>
+          <div class="inventory-badge">
+            <span>10' 2x12</span>
+            <strong id="invDisplay10">0</strong>
+          </div>
+          <div class="inventory-badge">
+            <span>12' 2x12</span>
+            <strong id="invDisplay12">0</strong>
+          </div>
+          <div class="inventory-badge">
+            <span>3/4" Ply</span>
+            <strong id="invDisplayPly">0</strong>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="form-group">
+            <label>Stock Type</label>
+            <select id="invSelectType">
+              <option value="inv8">8' 2x12 Stick</option>
+              <option value="inv10">10' 2x12 Stick</option>
+              <option value="inv12">12' 2x12 Stick</option>
+              <option value="invPly">4'x8' 3/4" Plywood</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Adjust Count (+/-)</label>
+            <input type="number" id="invCountInput" placeholder="e.g. 10 or -2">
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn btn-secondary btn-block" onclick="updateInventoryDirect()">Update Stock</button>
+          <button class="btn btn-success btn-block" onclick="deductCutListFromInventory()">Deduct Cut List</button>
+        </div>
+      </div>
+
+      <!-- OCR & Camera Module -->
       <div class="card no-print">
         <h2>Job Print Scanner / Photo Input</h2>
         <div class="ocr-box" onclick="document.getElementById('fileInput').click()">
@@ -91,6 +149,7 @@
         <button class="btn btn-secondary btn-block" onclick="parseOcrTextToInputs()">Auto-Fill From Scanned Text</button>
       </div>
 
+      <!-- Manual / Override Entry Form -->
       <div class="card no-print">
         <h2>Add Opening / Divider</h2>
         
@@ -109,6 +168,7 @@
           </div>
         </div>
 
+        <!-- Box Opening Inputs (Window & Door) -->
         <div id="openingFields">
           <div class="row">
             <div class="form-group">
@@ -135,6 +195,7 @@
           </div>
         </div>
 
+        <!-- Custom Divider Inputs -->
         <div id="dividerFields" style="display: none;">
           <div class="row">
             <div class="form-group">
@@ -172,7 +233,9 @@
       </div>
     </div>
 
+    <!-- Right Column: Live Master Cut Sheet & Stock Optimization -->
     <div>
+      <!-- Saw Cut List -->
       <div class="card print-target">
         <h2>Saw Master Cut List</h2>
         <div id="summaryStats" style="margin-bottom: 8px; color: var(--text-muted); font-size: 0.85rem;"></div>
@@ -196,11 +259,13 @@
         </div>
 
         <div style="margin-top: 14px; display: flex; gap: 8px;" class="no-print">
-          <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
+          <button class="btn btn-info" onclick="shareOrExport()">Share / Messenger</button>
+          <button class="btn btn-secondary" onclick="exportCSV()">Download CSV</button>
           <button class="btn btn-danger" onclick="clearList()">Clear All</button>
         </div>
       </div>
 
+      <!-- Stock Material Optimizer Module -->
       <div class="card print-target">
         <h2>Stock Material Pull & Cutting Optimization</h2>
         <div id="optimizerOutput" style="font-size: 0.9rem; line-height: 1.5;">
@@ -212,10 +277,68 @@
 
   <script>
     let cutItems = [];
+    let lastCalculatedDemand = { count8: 0, count10: 0, count12: 0, sheetsPly: 0 };
+
     const HEADER_CAP_OVERAGE = 3.25; // Top headers are +3.25" over inside width
     const DOOR_SILL_OVERAGE = 0.125; // Door bottom sill is inside width + 1/8" (field knockout)
-    const AVAILABLE_STOCK_LENGTHS = [96.0, 120.0, 144.0]; // 8', 10', 12' available boards
+    const AVAILABLE_STOCK_LENGTHS = [96.0, 120.0, 144.0]; // 8', 10', 12' stock boards
     const SAW_KERF = 0.125; // 1/8" saw kerf allowance
+    const SCRAP_THRESHOLD = 24.0; // Drops under 24" (2 feet) are considered waste scrap
+
+    // Local Storage Inventory Setup
+    function initInventory() {
+      if (localStorage.getItem('shop_inv_8') === null) localStorage.setItem('shop_inv_8', '15');
+      if (localStorage.getItem('shop_inv_10') === null) localStorage.setItem('shop_inv_10', '25');
+      if (localStorage.getItem('shop_inv_12') === null) localStorage.setItem('shop_inv_12', '10');
+      if (localStorage.getItem('shop_inv_ply') === null) localStorage.setItem('shop_inv_ply', '12');
+      renderInventoryDisplay();
+    }
+
+    function renderInventoryDisplay() {
+      document.getElementById('invDisplay8').innerText = localStorage.getItem('shop_inv_8') || 0;
+      document.getElementById('invDisplay10').innerText = localStorage.getItem('shop_inv_10') || 0;
+      document.getElementById('invDisplay12').innerText = localStorage.getItem('shop_inv_12') || 0;
+      document.getElementById('invDisplayPly').innerText = localStorage.getItem('shop_inv_ply') || 0;
+    }
+
+    function updateInventoryDirect() {
+      const type = document.getElementById('invSelectType').value;
+      const count = parseInt(document.getElementById('invCountInput').value);
+      if (isNaN(count)) return alert('Enter a valid quantity.');
+
+      let key = 'shop_inv_8';
+      if (type === 'inv10') key = 'shop_inv_10';
+      else if (type === 'inv12') key = 'shop_inv_12';
+      else if (type === 'invPly') key = 'shop_inv_ply';
+
+      let current = parseInt(localStorage.getItem(key)) || 0;
+      let updated = Math.max(0, current + count);
+      localStorage.setItem(key, updated.toString());
+      renderInventoryDisplay();
+      document.getElementById('invCountInput').value = '';
+    }
+
+    function deductCutListFromInventory() {
+      if (cutItems.length === 0) return alert('No cuts in current list to deduct.');
+      
+      let cur8 = parseInt(localStorage.getItem('shop_inv_8')) || 0;
+      let cur10 = parseInt(localStorage.getItem('shop_inv_10')) || 0;
+      let cur12 = parseInt(localStorage.getItem('shop_inv_12')) || 0;
+      let curPly = parseInt(localStorage.getItem('shop_inv_ply')) || 0;
+
+      const new8 = Math.max(0, cur8 - lastCalculatedDemand.count8);
+      const new10 = Math.max(0, cur10 - lastCalculatedDemand.count10);
+      const new12 = Math.max(0, cur12 - lastCalculatedDemand.count12);
+      const newPly = Math.max(0, curPly - lastCalculatedDemand.sheetsPly);
+
+      localStorage.setItem('shop_inv_8', new8.toString());
+      localStorage.setItem('shop_inv_10', new10.toString());
+      localStorage.setItem('shop_inv_12', new12.toString());
+      localStorage.setItem('shop_inv_ply', newPly.toString());
+
+      renderInventoryDisplay();
+      alert(`Deducted from Inventory:\n• 8' 2x12: -${lastCalculatedDemand.count8}\n• 10' 2x12: -${lastCalculatedDemand.count10}\n• 12' 2x12: -${lastCalculatedDemand.count12}\n• 3/4" Plywood: -${lastCalculatedDemand.sheetsPly}`);
+    }
 
     function toggleItemFields() {
       const type = document.getElementById('itemType').value;
@@ -509,15 +632,15 @@
       document.getElementById('summaryStats').innerText = `Total Pieces: ${totalPieces} | Total 2x12 Linear Footage: ${totalLbrFeet} LF`;
     }
 
-    // Multi-Length Stock Optimizer (8', 10', 12' 2x12s & 4'x8' 3/4" Plywood)
+    // Multi-Length Stock Optimizer with 24" Scrap Rule
     function optimizeStock() {
       const optContainer = document.getElementById('optimizerOutput');
       if (cutItems.length === 0) {
         optContainer.innerHTML = `<p style="color: var(--text-muted);">Add items above to calculate required 8', 10', and 12' 2x12 lumber sticks and 4'x8' 3/4" plywood sheets.</p>`;
+        lastCalculatedDemand = { count8: 0, count10: 0, count12: 0, sheetsPly: 0 };
         return;
       }
 
-      // 1. Expand 2x12 cuts into individual pieces
       let lumberPieces = [];
       let totalPlywoodAreaSqInches = 0;
 
@@ -531,10 +654,8 @@
         }
       });
 
-      // Sort lumber cuts longest to shortest
       lumberPieces.sort((a, b) => b.length - a.length);
 
-      // Packing cuts into optimal stock length (8', 10', 12')
       let unassigned = [...lumberPieces];
       let sticks = [];
 
@@ -543,7 +664,6 @@
         let currentCuts = [currentPiece];
         let currentUsedLength = currentPiece.length;
 
-        // Greedily fit other remaining pieces into this board up to max 12' (144")
         let i = 0;
         while (i < unassigned.length) {
           let candidate = unassigned[i];
@@ -556,7 +676,6 @@
           }
         }
 
-        // Pick smallest stock board (8', 10', 12') that fits the packed cuts
         let chosenStock = 144.0;
         if (currentUsedLength <= 96.0) {
           chosenStock = 96.0;
@@ -564,16 +683,18 @@
           chosenStock = 120.0;
         }
 
+        const dropLength = chosenStock - currentUsedLength;
+
         sticks.push({
           stockLength: chosenStock,
           stockName: chosenStock === 96.0 ? "8' Stock (96\")" : (chosenStock === 120.0 ? "10' Stock (120\")" : "12' Stock (144\")"),
           used: currentUsedLength,
-          remaining: chosenStock - currentUsedLength,
+          remaining: dropLength,
+          isScrap: dropLength < SCRAP_THRESHOLD,
           cuts: currentCuts
         });
       }
 
-      // Count stock sticks by size
       let count8 = 0, count10 = 0, count12 = 0;
       sticks.forEach(s => {
         if (s.stockLength === 96.0) count8++;
@@ -581,11 +702,12 @@
         else if (s.stockLength === 144.0) count12++;
       });
 
-      // 2. 4'x8' Plywood Sheet Estimator
       const SHEET_SQ_INCHES = 48 * 96;
       const plywoodSheetsNeeded = totalPlywoodAreaSqInches > 0 
         ? Math.ceil((totalPlywoodAreaSqInches * 1.15) / SHEET_SQ_INCHES)
         : 0;
+
+      lastCalculatedDemand = { count8, count10, count12, sheetsPly: plywoodSheetsNeeded };
 
       let html = `<div style="margin-bottom: 12px;">
         <span style="font-size: 1rem; color: var(--accent); font-weight: bold;">Lumber & Sheet Pull Required:</span>
@@ -598,19 +720,65 @@
       </div>`;
 
       if (sticks.length > 0) {
-        html += `<strong style="color: var(--accent); display:block; margin-bottom: 6px;">2x12 Cutting Layout (1/8" Saw Kerf Included):</strong>`;
+        html += `<strong style="color: var(--accent); display:block; margin-bottom: 6px;">2x12 Cutting Layout (1/8" Saw Kerf Included | &lt;2' = Waste Scrap):</strong>`;
         sticks.forEach((s, idx) => {
           const cutListStr = s.cuts.map(c => `<strong>${toFraction(c.length)}</strong> [${c.mark}]`).join(' + ');
+          const dropStatus = s.isScrap 
+            ? `<span class="scrap-tag">Drop: ${toFraction(s.remaining)} (Scrap &lt; 2')</span>` 
+            : `<span class="reusable-tag">Drop: ${toFraction(s.remaining)} (Reusable)</span>`;
+
           html += `
             <div class="nesting-card">
               <strong>Stick #${idx + 1} (${s.stockName}):</strong> ${cutListStr} 
-              <span style="color: var(--text-muted); float: right;">Drop/Scrap: ${toFraction(s.remaining)}</span>
+              <span style="float: right;">${dropStatus}</span>
             </div>
           `;
         });
       }
 
       optContainer.innerHTML = html;
+    }
+
+    // Phone Native Share Sheet (Messenger, SMS, WhatsApp, Email, Clipboard)
+    async function shareOrExport() {
+      if (cutItems.length === 0) return alert('No cuts to share.');
+
+      let shareText = `📋 PRECAST SHOP MASTER CUT LIST\n`;
+      shareText += `Generated: ${new Date().toLocaleDateString()}\n\n`;
+
+      shareText += `--- CUT PIECES ---\n`;
+      cutItems.forEach(i => {
+        shareText += `• [${i.mark}] ${i.qty}x | ${i.material} | ${toFraction(i.width)} W x ${toFraction(i.cutLength)} L | ${i.angles} | ${i.desc}\n`;
+      });
+
+      shareText += `\n--- MATERIAL PULL ---\n`;
+      if (lastCalculatedDemand.count8 > 0) shareText += `• ${lastCalculatedDemand.count8}x 8' 2x12 (Ripped 10.38")\n`;
+      if (lastCalculatedDemand.count10 > 0) shareText += `• ${lastCalculatedDemand.count10}x 10' 2x12 (Ripped 10.38")\n`;
+      if (lastCalculatedDemand.count12 > 0) shareText += `• ${lastCalculatedDemand.count12}x 12' 2x12 (Ripped 10.38")\n`;
+      if (lastCalculatedDemand.sheetsPly > 0) shareText += `• ${lastCalculatedDemand.sheetsPly}x 4'x8' 3/4" Plywood Sheets\n`;
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'Precast Shop Cut List',
+            text: shareText
+          });
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            fallbackCopyToClipboard(shareText);
+          }
+        }
+      } else {
+        fallbackCopyToClipboard(shareText);
+      }
+    }
+
+    function fallbackCopyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Cut list copied to clipboard! You can paste it directly into Messenger or SMS.');
+      }).catch(() => {
+        alert('Unable to open share sheet. Use CSV download instead.');
+      });
     }
 
     function exportCSV() {
@@ -626,6 +794,11 @@
       a.setAttribute('download', `Shop_CutList_${new Date().toISOString().slice(0,10)}.csv`);
       a.click();
     }
+
+    // Initialize inventory on load
+    window.onload = function() {
+      initInventory();
+    };
   </script>
 </body>
 </html>
