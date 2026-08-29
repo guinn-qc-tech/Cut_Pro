@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Precast Carpentry Shop Cut List & Print Analyzer</title>
+  <title>Precast Carpentry Shop Cut List & Material Optimizer</title>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     :root {
@@ -16,15 +16,16 @@
       --border: #2d3748;
       --success: #10b981;
       --danger: #ef4444;
+      --info: #3b82f6;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
     body { background: var(--bg-dark); color: var(--text); padding: 16px; font-size: 14px; }
     .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 12px; margin-bottom: 16px; }
-    .header h1 { font-size: 1.4rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    .header h1 { font-size: 1.3rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+    .grid { display: grid; grid-template-columns: 1.1fr 1.9fr; gap: 16px; }
+    @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
     .card { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 6px; padding: 16px; margin-bottom: 16px; }
-    .card h2 { font-size: 1.1rem; margin-bottom: 12px; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+    .card h2 { font-size: 1.05rem; margin-bottom: 12px; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 6px; }
     .form-group { margin-bottom: 12px; }
     label { display: block; margin-bottom: 4px; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
     input, select, textarea { width: 100%; background: #0f1115; border: 1px solid var(--border); color: #fff; padding: 8px 10px; border-radius: 4px; font-size: 0.95rem; }
@@ -37,25 +38,27 @@
     .btn-secondary:hover { background: #4b5563; }
     .btn-danger { background: var(--danger); color: #fff; }
     .btn-block { width: 100%; }
-    .ocr-box { border: 2px dashed var(--border); padding: 16px; text-align: center; border-radius: 6px; cursor: pointer; margin-bottom: 12px; }
+    .ocr-box { border: 2px dashed var(--border); padding: 14px; text-align: center; border-radius: 6px; cursor: pointer; margin-bottom: 12px; }
     .ocr-box:hover { border-color: var(--accent); }
-    #imagePreview { max-width: 100%; max-height: 200px; object-fit: contain; margin-top: 10px; display: none; }
+    #imagePreview { max-width: 100%; max-height: 180px; object-fit: contain; margin-top: 10px; display: none; }
     .table-container { overflow-x: auto; margin-top: 10px; }
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
     th { background: #262c36; color: var(--accent); padding: 8px 10px; border: 1px solid var(--border); text-transform: uppercase; font-size: 0.72rem; }
     td { padding: 8px 10px; border: 1px solid var(--border); }
     tr:nth-child(even) { background: #171b21; }
     .tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
-    .tag-2x12 { background: #3b82f6; color: #fff; }
-    .tag-plywood { background: #10b981; color: #fff; }
-    .tag-concrete { background: #8b5cf6; color: #fff; }
-    .print-raw { font-family: monospace; font-size: 0.8rem; height: 90px; resize: vertical; }
-    .status-bar { font-size: 0.85rem; color: var(--accent); margin-top: 6px; }
+    .tag-2x12 { background: var(--info); color: #fff; }
+    .tag-plywood { background: var(--success); color: #fff; }
+    .tag-door { background: #d97706; color: #fff; }
+    .print-raw { font-family: monospace; font-size: 0.8rem; height: 75px; resize: vertical; }
+    .status-bar { font-size: 0.85rem; color: var(--accent); margin-top: 4px; }
+    .nesting-card { background: #13171d; border: 1px solid #2d3748; padding: 10px; border-radius: 4px; margin-bottom: 8px; font-size: 0.85rem; }
+    .nesting-card strong { color: var(--accent); }
     @media print {
       body { background: #fff; color: #000; padding: 0; }
       .no-print, .btn, .card:not(.print-target) { display: none !important; }
       .grid { display: block; }
-      .card { border: none; padding: 0; }
+      .card { border: none; padding: 0; margin-bottom: 20px; }
       th { background: #eee !important; color: #000 !important; }
       td, th { border: 1px solid #000 !important; }
     }
@@ -66,7 +69,7 @@
   <div class="header no-print">
     <div>
       <h1>Precast Shop Carpentry Engine</h1>
-      <span style="color: var(--text-muted); font-size: 0.85rem;">2x12 Openings (Top/Bottom +3.25" Cap) | 0.75" Plywood Sloped Dividers (10.5" Bed Depth)</span>
+      <span style="color: var(--text-muted); font-size: 0.85rem;">2x12 Ripped to 10.38" (8', 10', 12' Stock) | 4'x8' 0.75" Plywood Bulkheads (10.5" Bed Depth)</span>
     </div>
     <button class="btn btn-secondary" onclick="window.print()">Print Cut Sheet</button>
   </div>
@@ -81,9 +84,9 @@
           <img id="imagePreview" alt="Job Print Preview" />
         </div>
         <div id="ocrStatus" class="status-bar"></div>
-        <div class="form-group" style="margin-top: 10px;">
+        <div class="form-group" style="margin-top: 8px;">
           <label>Parsed Print Text / Notes</label>
-          <textarea id="rawOcrText" class="print-raw" placeholder="OCR extracted dimensions will appear here. You can also paste or modify shop notes directly..."></textarea>
+          <textarea id="rawOcrText" class="print-raw" placeholder="OCR extracted dimensions appear here..."></textarea>
         </div>
         <button class="btn btn-secondary btn-block" onclick="parseOcrTextToInputs()">Auto-Fill From Scanned Text</button>
       </div>
@@ -93,22 +96,49 @@
         
         <div class="row">
           <div class="form-group">
-            <label>Item Type</label>
+            <label>Item Category</label>
             <select id="itemType" onchange="toggleItemFields()">
-              <option value="divider">Custom Divider (0.75" Plywood)</option>
-              <option value="window_door">Box Window / Door (2x12 Ripped 10.38")</option>
+              <option value="window">Box Window Opening (4-Sided 2x12)</option>
+              <option value="door">Box Door Opening (Bottom Field Cut-Out)</option>
+              <option value="divider">Custom Divider Bulkhead (0.75" Plywood)</option>
             </select>
           </div>
           <div class="form-group">
             <label>Mark / Identifier</label>
-            <input type="text" id="itemMark" placeholder="e.g., 13F, DIV-A, W-101">
+            <input type="text" id="itemMark" placeholder="e.g., W-101, D-1, 13F">
           </div>
         </div>
 
-        <div id="dividerFields">
+        <div id="openingFields">
           <div class="row">
             <div class="form-group">
-              <label>Panel Cut Length (Inches along Bed)</label>
+              <label>Inside Width (Inches)</label>
+              <input type="number" step="0.0625" id="openWidth" placeholder="e.g., 36.0 or 37.0">
+            </div>
+            <div class="form-group">
+              <label>Inside Height (Inches)</label>
+              <input type="number" step="0.0625" id="openHeight" placeholder="e.g., 60.0 or 84.0">
+            </div>
+          </div>
+          <div class="row">
+            <div class="form-group">
+              <label>Ripped Width (Form Depth)</label>
+              <input type="number" step="0.01" id="openRipWidth" value="10.38">
+            </div>
+            <div class="form-group">
+              <label>Core Type</label>
+              <select id="openCoreType">
+                <option value="wood_buck">Standard Wood Buck</option>
+                <option value="solid_concrete">Solid Blockout (Stripped On-Site)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div id="dividerFields" style="display: none;">
+          <div class="row">
+            <div class="form-group">
+              <label>Panel Length (Inches along Bed)</label>
               <input type="number" step="0.0625" id="divPanelHeight" placeholder="e.g., 120 or 68.5">
             </div>
             <div class="form-group">
@@ -122,44 +152,12 @@
               <input type="number" step="0.0625" id="divSlopeOffset" placeholder="e.g., 8.75 or 2.0625 (2 1/16&quot;)">
             </div>
             <div class="form-group">
-              <label>Angle Mode / Override</label>
+              <label>Angle Preset / Override</label>
               <select id="divAnglePreset" onchange="handleAnglePresetChange()">
                 <option value="calc">Calculate from Offset (Side B)</option>
                 <option value="45">45° Divider (Offset = 10.5")</option>
                 <option value="22.5">22.5° Divider (Offset = 4 3/8")</option>
                 <option value="78.75">78.75° Plan / 11.25° Saw (Offset = 2 1/16")</option>
-              </select>
-            </div>
-          </div>
-          <div class="row">
-            <div class="form-group">
-              <label>Plywood Thickness</label>
-              <input type="number" step="0.01" id="divThickness" value="0.75">
-            </div>
-          </div>
-        </div>
-
-        <div id="openingFields" style="display: none;">
-          <div class="row">
-            <div class="form-group">
-              <label>Inside Width (Inches)</label>
-              <input type="number" step="0.0625" id="openWidth" placeholder="e.g., 36.0 or 37.0">
-            </div>
-            <div class="form-group">
-              <label>Inside Height (Inches)</label>
-              <input type="number" step="0.0625" id="openHeight" placeholder="e.g., 60.0 or 63.0">
-            </div>
-          </div>
-          <div class="row">
-            <div class="form-group">
-              <label>Ripped Width (Form Depth)</label>
-              <input type="number" step="0.01" id="openRipWidth" value="10.38">
-            </div>
-            <div class="form-group">
-              <label>Core Type</label>
-              <select id="openCoreType">
-                <option value="wood_buck">Standard Wood Buck (Inside Dimension)</option>
-                <option value="solid_concrete">Solid Blockout (Stripped at Jobsite)</option>
               </select>
             </div>
           </div>
@@ -186,21 +184,27 @@
                 <th>Mark</th>
                 <th>Qty</th>
                 <th>Material</th>
-                <th>Board Width (Hypotenuse)</th>
+                <th>Board Width</th>
                 <th>Cut Length</th>
-                <th>Top & Bottom Bevel</th>
+                <th>Saw Bevel</th>
                 <th>Placement / Saw Notes</th>
                 <th class="no-print">Action</th>
               </tr>
             </thead>
-            <tbody id="cutListBody">
-              </tbody>
+            <tbody id="cutListBody"></tbody>
           </table>
         </div>
 
-        <div style="margin-top: 16px; display: flex; gap: 8px;" class="no-print">
+        <div style="margin-top: 14px; display: flex; gap: 8px;" class="no-print">
           <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
           <button class="btn btn-danger" onclick="clearList()">Clear All</button>
+        </div>
+      </div>
+
+      <div class="card print-target">
+        <h2>Stock Material Pull & Cutting Optimization</h2>
+        <div id="optimizerOutput" style="font-size: 0.9rem; line-height: 1.5;">
+          <p style="color: var(--text-muted);">Add items above to calculate required 8', 10', and 12' 2x12 lumber sticks and 4'x8' 3/4" plywood sheets.</p>
         </div>
       </div>
     </div>
@@ -208,12 +212,20 @@
 
   <script>
     let cutItems = [];
-    const HEADER_CAP_OVERAGE = 3.25; // Top/Bottom headers are +3.25" over inside width
+    const HEADER_CAP_OVERAGE = 3.25; // Top headers are +3.25" over inside width
+    const DOOR_SILL_OVERAGE = 0.125; // Door bottom sill is inside width + 1/8" (field knockout)
+    const AVAILABLE_STOCK_LENGTHS = [96.0, 120.0, 144.0]; // 8', 10', 12' available boards
+    const SAW_KERF = 0.125; // 1/8" saw kerf allowance
 
     function toggleItemFields() {
       const type = document.getElementById('itemType').value;
-      document.getElementById('openingFields').style.display = type === 'window_door' ? 'block' : 'none';
-      document.getElementById('dividerFields').style.display = type === 'divider' ? 'block' : 'none';
+      if (type === 'divider') {
+        document.getElementById('openingFields').style.display = 'none';
+        document.getElementById('dividerFields').style.display = 'block';
+      } else {
+        document.getElementById('openingFields').style.display = 'block';
+        document.getElementById('dividerFields').style.display = 'none';
+      }
     }
 
     function handleAnglePresetChange() {
@@ -223,13 +235,12 @@
       if (preset === '45') {
         document.getElementById('divSlopeOffset').value = depth.toFixed(4);
       } else if (preset === '22.5') {
-        document.getElementById('divSlopeOffset').value = "4.375"; // 4 3/8"
+        document.getElementById('divSlopeOffset').value = "4.375";
       } else if (preset === '78.75') {
-        document.getElementById('divSlopeOffset').value = "2.0625"; // 2 1/16"
+        document.getElementById('divSlopeOffset').value = "2.0625";
       }
     }
 
-    // Convert decimal inches to fractional string (nearest 1/16")
     function toFraction(val) {
       if (!val || isNaN(val)) return '0"';
       const whole = Math.floor(val);
@@ -248,11 +259,9 @@
       return whole > 0 ? `${whole} ${num}/${den}"` : `${num}/${den}"`;
     }
 
-    // Parse imperial strings (e.g. 5'-8 1/2", 37", 2 1/16) to decimal
     function parseImperialToInches(str) {
       if (!str) return null;
       str = str.trim().replace(/["']/g, '');
-      
       if (str.includes('-')) {
         const parts = str.split('-');
         const feet = parseFloat(parts[0]) || 0;
@@ -278,7 +287,6 @@
       return parseFloat(str) || 0;
     }
 
-    // Process OCR via Tesseract.js
     async function handleImageUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -302,7 +310,6 @@
       }
     }
 
-    // Heuristic Parser for Precast Prints
     function parseOcrTextToInputs() {
       const text = document.getElementById('rawOcrText').value;
       if (!text) return;
@@ -315,11 +322,11 @@
         const w = parseImperialToInches(openingMatch[1]);
         const h = parseImperialToInches(openingMatch[2]);
         if (w > 0 && h > 0) {
-          document.getElementById('itemType').value = 'window_door';
+          document.getElementById('itemType').value = /door/i.test(text) ? 'door' : 'window';
           toggleItemFields();
           document.getElementById('openWidth').value = w;
           document.getElementById('openHeight').value = h;
-          document.getElementById('itemMark').value = "OP-" + Math.floor(Math.random() * 900 + 100);
+          document.getElementById('itemMark').value = (/door/i.test(text) ? "D-" : "W-") + Math.floor(Math.random() * 900 + 100);
           return;
         }
       }
@@ -346,7 +353,7 @@
       const mark = document.getElementById('itemMark').value || 'ITEM';
       const qty = parseInt(document.getElementById('itemQty').value) || 1;
 
-      if (type === 'window_door') {
+      if (type === 'window' || type === 'door') {
         const w = parseFloat(document.getElementById('openWidth').value);
         const h = parseFloat(document.getElementById('openHeight').value);
         const rip = parseFloat(document.getElementById('openRipWidth').value) || 10.38;
@@ -357,90 +364,117 @@
           return;
         }
 
-        const headerCut = w + HEADER_CAP_OVERAGE;
+        const topHeaderCut = w + HEADER_CAP_OVERAGE;
         const jambCut = h;
 
-        // Top and Bottom Headers (2 per box * qty)
+        // Top Header (+3.25" over inside width)
         cutItems.push({
           id: Date.now() + 1,
           mark: mark,
-          qty: 2 * qty,
-          material: '2x12 Ripped',
+          qty: qty,
+          material: '2x12 Ripped (10.38")',
           tagClass: 'tag-2x12',
           width: rip,
-          cutLength: headerCut,
+          cutLength: topHeaderCut,
           angles: '90° Square Cuts',
-          desc: `Top Header & Bottom Sill (Inside Width + 3 1/4" Cap) - ${core === 'solid_concrete' ? 'Stripped on site' : 'Standard Buck'}`
+          desc: `Top Header (Inside Width + 3 1/4" Cap) - ${core === 'solid_concrete' ? 'Stripped on-site' : 'Standard Buck'}`
         });
 
-        // Vertical Jambs / Sides (2 per box * qty)
+        // Bottom Sill (Window = +3.25" Cap | Door = +1/8" Field Cut-Out)
+        if (type === 'window') {
+          cutItems.push({
+            id: Date.now() + 2,
+            mark: mark,
+            qty: qty,
+            material: '2x12 Ripped (10.38")',
+            tagClass: 'tag-2x12',
+            width: rip,
+            cutLength: topHeaderCut,
+            angles: '90° Square Cuts',
+            desc: `Bottom Sill (Inside Width + 3 1/4" Cap)`
+          });
+        } else {
+          const doorSillCut = w + DOOR_SILL_OVERAGE;
+          cutItems.push({
+            id: Date.now() + 2,
+            mark: mark,
+            qty: qty,
+            material: '2x12 Ripped (10.38")',
+            tagClass: 'tag-door',
+            width: rip,
+            cutLength: doorSillCut,
+            angles: '90° Square Cuts',
+            desc: `Bottom Door Spreader/Sill (Inside Width + 1/8" - Cut out at job site)`
+          });
+        }
+
+        // 2 Side Jambs (Inside Height square)
         cutItems.push({
-          id: Date.now() + 2,
+          id: Date.now() + 3,
           mark: mark,
           qty: 2 * qty,
-          material: '2x12 Ripped',
+          material: '2x12 Ripped (10.38")',
           tagClass: 'tag-2x12',
           width: rip,
           cutLength: jambCut,
           angles: '90° Square Cuts',
-          desc: `Vertical Side Jambs (Inside Height Square)`
+          desc: `Side Jambs (Inside Height Square)`
         });
 
       } else {
-        // Custom 0.75" Plywood Divider Calculations
+        // Custom 0.75" Plywood Divider
         const panelLength = parseFloat(document.getElementById('divPanelHeight').value) || 0;
-        const sideA = parseFloat(document.getElementById('divFormDepth').value) || 10.5; // Form Bed Height (a = 10.5")
-        let sideB = parseFloat(document.getElementById('divSlopeOffset').value) || 0; // Slope Offset Delta (b)
-        const plyThick = parseFloat(document.getElementById('divThickness').value) || 0.75;
+        const sideA = parseFloat(document.getElementById('divFormDepth').value) || 10.5;
+        let sideB = parseFloat(document.getElementById('divSlopeOffset').value) || 0;
         const preset = document.getElementById('divAnglePreset').value;
 
         if (preset === '45' && (!sideB || sideB === 0)) {
-          sideB = sideA; // 45° divider offset equals form depth
+          sideB = sideA;
         }
 
-        let betaAngle = 0; // Saw bevel angle (blade tilt off vertical)
-        let sideC_Hypotenuse = sideA; // Total Board Width along slope
+        let betaAngle = 0;
+        let sideC_Hypotenuse = sideA;
         let edgeLongToShort = 0;
 
         if (sideB > 0) {
-          // tan(beta) = b / a
           const betaRad = Math.atan(sideB / sideA);
           betaAngle = (betaRad * (180 / Math.PI)).toFixed(1);
-          
-          // Board Width (Side C) = sqrt(a^2 + b^2)
           sideC_Hypotenuse = Math.sqrt((sideA * sideA) + (sideB * sideB));
-          edgeLongToShort = plyThick * Math.tan(betaRad);
+          edgeLongToShort = 0.75 * Math.tan(betaRad);
         }
 
         const angleDesc = sideB === 0 
           ? '90° Square Edges' 
-          : `Rip Bevel: ${betaAngle}° (Top & Bottom Edges Parallel) | Edge Shift: ${toFraction(edgeLongToShort)}`;
+          : `Rip Bevel: ${betaAngle}° (Top & Bottom Parallel) | Edge Shift: ${toFraction(edgeLongToShort)}`;
 
         cutItems.push({
           id: Date.now(),
           mark: mark,
           qty: qty,
-          material: `${plyThick}" Plywood`,
+          material: `0.75" Plywood (4'x8' Stock)`,
           tagClass: 'tag-plywood',
           width: sideC_Hypotenuse,
           cutLength: panelLength > 0 ? panelLength : sideC_Hypotenuse,
           angles: angleDesc,
-          desc: `Sloped Divider Board (Rip Width: ${toFraction(sideC_Hypotenuse)} [${sideC_Hypotenuse.toFixed(2)}"], Form Bed: ${sideA}", Offset Diff: ${toFraction(sideB)})`
+          desc: `Sloped Divider Bulkhead (Rip Width: ${toFraction(sideC_Hypotenuse)} [${sideC_Hypotenuse.toFixed(2)}"], Form Bed: ${sideA}", Offset Diff: ${toFraction(sideB)})`
         });
       }
 
       renderCutList();
+      optimizeStock();
     }
 
     function removeItem(id) {
       cutItems = cutItems.filter(item => item.id !== id);
       renderCutList();
+      optimizeStock();
     }
 
     function clearList() {
       if (confirm('Clear entire cut sheet?')) {
         cutItems = [];
         renderCutList();
+        optimizeStock();
       }
     }
 
@@ -472,7 +506,111 @@
       });
 
       const totalLbrFeet = (totalLinearInches2x12 / 12).toFixed(1);
-      document.getElementById('summaryStats').innerText = `Total Pieces: ${totalPieces} | Total 2x12 Ripped Linear Feet: ${totalLbrFeet} LF`;
+      document.getElementById('summaryStats').innerText = `Total Pieces: ${totalPieces} | Total 2x12 Linear Footage: ${totalLbrFeet} LF`;
+    }
+
+    // Multi-Length Stock Optimizer (8', 10', 12' 2x12s & 4'x8' 3/4" Plywood)
+    function optimizeStock() {
+      const optContainer = document.getElementById('optimizerOutput');
+      if (cutItems.length === 0) {
+        optContainer.innerHTML = `<p style="color: var(--text-muted);">Add items above to calculate required 8', 10', and 12' 2x12 lumber sticks and 4'x8' 3/4" plywood sheets.</p>`;
+        return;
+      }
+
+      // 1. Expand 2x12 cuts into individual pieces
+      let lumberPieces = [];
+      let totalPlywoodAreaSqInches = 0;
+
+      cutItems.forEach(item => {
+        if (item.material.includes('2x12')) {
+          for (let i = 0; i < item.qty; i++) {
+            lumberPieces.push({ mark: item.mark, length: item.cutLength, desc: item.desc });
+          }
+        } else if (item.material.includes('Plywood')) {
+          totalPlywoodAreaSqInches += (item.width * item.cutLength * item.qty);
+        }
+      });
+
+      // Sort lumber cuts longest to shortest
+      lumberPieces.sort((a, b) => b.length - a.length);
+
+      // Packing cuts into optimal stock length (8', 10', 12')
+      let unassigned = [...lumberPieces];
+      let sticks = [];
+
+      while (unassigned.length > 0) {
+        let currentPiece = unassigned.shift();
+        let currentCuts = [currentPiece];
+        let currentUsedLength = currentPiece.length;
+
+        // Greedily fit other remaining pieces into this board up to max 12' (144")
+        let i = 0;
+        while (i < unassigned.length) {
+          let candidate = unassigned[i];
+          if (currentUsedLength + SAW_KERF + candidate.length <= 144.0) {
+            currentCuts.push(candidate);
+            currentUsedLength += (SAW_KERF + candidate.length);
+            unassigned.splice(i, 1);
+          } else {
+            i++;
+          }
+        }
+
+        // Pick smallest stock board (8', 10', 12') that fits the packed cuts
+        let chosenStock = 144.0;
+        if (currentUsedLength <= 96.0) {
+          chosenStock = 96.0;
+        } else if (currentUsedLength <= 120.0) {
+          chosenStock = 120.0;
+        }
+
+        sticks.push({
+          stockLength: chosenStock,
+          stockName: chosenStock === 96.0 ? "8' Stock (96\")" : (chosenStock === 120.0 ? "10' Stock (120\")" : "12' Stock (144\")"),
+          used: currentUsedLength,
+          remaining: chosenStock - currentUsedLength,
+          cuts: currentCuts
+        });
+      }
+
+      // Count stock sticks by size
+      let count8 = 0, count10 = 0, count12 = 0;
+      sticks.forEach(s => {
+        if (s.stockLength === 96.0) count8++;
+        else if (s.stockLength === 120.0) count10++;
+        else if (s.stockLength === 144.0) count12++;
+      });
+
+      // 2. 4'x8' Plywood Sheet Estimator
+      const SHEET_SQ_INCHES = 48 * 96;
+      const plywoodSheetsNeeded = totalPlywoodAreaSqInches > 0 
+        ? Math.ceil((totalPlywoodAreaSqInches * 1.15) / SHEET_SQ_INCHES)
+        : 0;
+
+      let html = `<div style="margin-bottom: 12px;">
+        <span style="font-size: 1rem; color: var(--accent); font-weight: bold;">Lumber & Sheet Pull Required:</span>
+        <div style="margin-top: 4px; line-height: 1.6;">
+          ${count8 > 0 ? `• <strong>${count8} stick(s)</strong> of <strong>8' 2x12</strong> (Ripped 10.38")<br>` : ''}
+          ${count10 > 0 ? `• <strong>${count10} stick(s)</strong> of <strong>10' 2x12</strong> (Ripped 10.38")<br>` : ''}
+          ${count12 > 0 ? `• <strong>${count12} stick(s)</strong> of <strong>12' 2x12</strong> (Ripped 10.38")<br>` : ''}
+          ${plywoodSheetsNeeded > 0 ? `• <strong>${plywoodSheetsNeeded} sheet(s)</strong> of <strong>4'x8' 3/4" Plywood</strong>` : ''}
+        </div>
+      </div>`;
+
+      if (sticks.length > 0) {
+        html += `<strong style="color: var(--accent); display:block; margin-bottom: 6px;">2x12 Cutting Layout (1/8" Saw Kerf Included):</strong>`;
+        sticks.forEach((s, idx) => {
+          const cutListStr = s.cuts.map(c => `<strong>${toFraction(c.length)}</strong> [${c.mark}]`).join(' + ');
+          html += `
+            <div class="nesting-card">
+              <strong>Stick #${idx + 1} (${s.stockName}):</strong> ${cutListStr} 
+              <span style="color: var(--text-muted); float: right;">Drop/Scrap: ${toFraction(s.remaining)}</span>
+            </div>
+          `;
+        });
+      }
+
+      optContainer.innerHTML = html;
     }
 
     function exportCSV() {
