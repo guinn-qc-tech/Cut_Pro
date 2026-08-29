@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Precast Carpentry Shop Cut List & Print Analyzer</title>
+  <!-- Tesseract.js for offline/client OCR print reading -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <style>
+    :root {
+      --bg-dark: #121417;
+      --panel-bg: #1c2026;
+      --accent: #f59e0b;
+      --accent-hover: #d97706;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --border: #2d3748;
+      --success: #10b981;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    body { background: var(--bg-dark); color: var(--text); padding: 16px; font-size: 14px; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-b: 2px solid var(--border); padding-bottom: 12px; margin-bottom: 16px; }
+    .header h1 { font-size: 1.4rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    .card { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 6px; padding: 16px; margin-bottom: 16px; }
+    .card h2 { font-size: 1.1rem; margin-bottom: 12px; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+    .form-group { margin-bottom: 12px; }
+    label { display: block; margin-bottom: 4px; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
+    input, select, textarea { width: 100%; background: #0f1115; border: 1px solid var(--border); color: #fff; padding: 8px 10px; border-radius: 4px; font-size: 0.95rem; }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); outline: none; }
+    .row { display: flex; gap: 10px; }
+    .row .form-group { flex: 1; }
+    .btn { background: var(--accent); color: #000; font-weight: bold; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-transform: uppercase; font-size: 0.85rem; }
+    .btn:hover { background: var(--accent-hover); }
+    .btn-secondary { background: #374151; color: #fff; }
+    .btn-secondary:hover { background: #4b5563; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-block { width: 100%; }
+    .ocr-box { border: 2px dashed var(--border); padding: 16px; text-align: center; border-radius: 6px; cursor: pointer; margin-bottom: 12px; }
+    .ocr-box:hover { border-color: var(--accent); }
+    #imagePreview { max-width: 100%; max-height: 200px; object-fit: contain; margin-top: 10px; display: none; }
+    .table-container { overflow-x: auto; margin-top: 10px; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
+    th { background: #262c36; color: var(--accent); padding: 8px 10px; border: 1px solid var(--border); text-transform: uppercase; font-size: 0.75rem; }
+    td { padding: 8px 10px; border: 1px solid var(--border); }
+    tr:nth-child(even) { background: #171b21; }
+    .tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+    .tag-2x12 { background: #3b82f6; color: #fff; }
+    .tag-plywood { background: #10b981; color: #fff; }
+    .tag-concrete { background: #8b5cf6; color: #fff; }
+    .print-raw { font-family: monospace; font-size: 0.8rem; height: 90px; resize: vertical; }
+    .status-bar { font-size: 0.85rem; color: var(--accent); margin-top: 6px; }
+    @media print {
+      body { background: #fff; color: #000; padding: 0; }
+      .no-print, .btn, .card:not(.print-target) { display: none !important; }
+      .grid { display: block; }
+      .card { border: none; padding: 0; }
+      th { background: #eee !important; color: #000 !important; }
+      td, th { border: 1px solid #000 !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header no-print">
+    <div>
+      <h1>Precast Shop Carpentry Engine</h1>
+      <span style="color: var(--text-muted); font-size: 0.85rem;">2x12 Rip: 10.38" | 0.75" Plywood Custom Dividers | Box Openings</span>
+    </div>
+    <button class="btn btn-secondary" onclick="window.print()">Print Cut Sheet</button>
+  </div>
+
+  <div class="grid">
+    <!-- Left Column: Input & Print Scanning -->
+    <div>
+      <!-- OCR & Camera Module -->
+      <div class="card no-print">
+        <h2>Job Print Scanner / Photo Input</h2>
+        <div class="ocr-box" onclick="document.getElementById('fileInput').click()">
+          <span>Take Photo / Upload Job Print Detail</span>
+          <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none" onchange="handleImageUpload(event)">
+          <img id="imagePreview" alt="Job Print Preview" />
+        </div>
+        <div id="ocrStatus" class="status-bar"></div>
+        <div class="form-group" style="margin-top: 10px;">
+          <label>Parsed Print Text / Notes</label>
+          <textarea id="rawOcrText" class="print-raw" placeholder="OCR extracted dimensions will appear here. You can also paste or modify shop notes directly..."></textarea>
+        </div>
+        <button class="btn btn-secondary btn-block" onclick="parseOcrTextToInputs()">Auto-Fill From Scanned Text</button>
+      </div>
+
+      <!-- Manual / Override Entry Form -->
+      <div class="card no-print">
+        <h2>Add Opening / Divider</h2>
+        
+        <div class="row">
+          <div class="form-group">
+            <label>Item Type</label>
+            <select id="itemType" onchange="toggleItemFields()">
+              <option value="window_door">Box Window / Door (2x12 Ripped 10.38")</option>
+              <option value="divider">Custom Divider (0.75" Plywood)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Mark / Identifier</label>
+            <input type="text" id="itemMark" placeholder="e.g., W-101, DIV-A">
+          </div>
+        </div>
+
+        <!-- Box Opening Inputs -->
+        <div id="openingFields">
+          <div class="row">
+            <div class="form-group">
+              <label>Inside Width (Inches)</label>
+              <input type="number" step="0.0625" id="openWidth" placeholder="e.g., 36.0 or 36.5">
+            </div>
+            <div class="form-group">
+              <label>Inside Height (Inches)</label>
+              <input type="number" step="0.0625" id="openHeight" placeholder="e.g., 48.0">
+            </div>
+          </div>
+          <div class="row">
+            <div class="form-group">
+              <label>Ripped Width (Form Depth)</label>
+              <input type="number" step="0.01" id="openRipWidth" value="10.38">
+            </div>
+            <div class="form-group">
+              <label>Core Type</label>
+              <select id="openCoreType">
+                <option value="wood_buck">Standard Wood Buck (Inside Dimension)</option>
+                <option value="solid_concrete">Solid Blockout (Stripped at Jobsite)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Divider Inputs -->
+        <div id="dividerFields" style="display: none;">
+          <div class="row">
+            <div class="form-group">
+              <label>Divider Length / Run (Inches)</label>
+              <input type="number" step="0.0625" id="divLength" placeholder="Total Length">
+            </div>
+            <div class="form-group">
+              <label>Start Height / Width (Inches)</label>
+              <input type="number" step="0.0625" id="divStartHeight" placeholder="Height at start">
+            </div>
+          </div>
+          <div class="row">
+            <div class="form-group">
+              <label>End Height / Width (Inches)</label>
+              <input type="number" step="0.0625" id="divEndHeight" placeholder="Height at end (same if square)">
+            </div>
+            <div class="form-group">
+              <label>Plywood Thickness</label>
+              <input type="number" step="0.01" id="divThickness" value="0.75">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Quantity</label>
+          <input type="number" id="itemQty" value="1" min="1">
+        </div>
+
+        <button class="btn btn-block" onclick="addItem()">Add To Cut List</button>
+      </div>
+    </div>
+
+    <!-- Right Column: Live Master Cut Sheet -->
+    <div>
+      <div class="card print-target">
+        <h2>Saw Master Cut List</h2>
+        <div id="summaryStats" style="margin-bottom: 8px; color: var(--text-muted); font-size: 0.85rem;"></div>
+        
+        <div class="table-container">
+          <table id="cutTable">
+            <thead>
+              <tr>
+                <th>Mark</th>
+                <th>Qty</th>
+                <th>Material</th>
+                <th>Width</th>
+                <th>Cut Length</th>
+                <th>Bevel / Angles</th>
+                <th>Description / Placement</th>
+                <th class="no-print">Action</th>
+              </tr>
+            </thead>
+            <tbody id="cutListBody">
+              <!-- Dynamically rendered cut pieces -->
+            </tbody>
+          </table>
+        </div>
+
+        <div style="margin-top: 16px; display: flex; gap: 8px;" class="no-print">
+          <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
+          <button class="btn btn-danger" onclick="clearList()">Clear All</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State management
+    let cutItems = [];
+    const LUMBER_ACTUAL_THICKNESS = 1.5; // Standard 2x lumber actual thickness
+
+    function toggleItemFields() {
+      const type = document.getElementById('itemType').value;
+      document.getElementById('openingFields').style.display = type === 'window_door' ? 'block' : 'none';
+      document.getElementById('dividerFields').style.display = type === 'divider' ? 'block' : 'none';
+    }
+
+    // Convert decimal inches to fractional string (nearest 1/16")
+    function toFraction(val) {
+      if (!val || isNaN(val)) return '0"';
+      const whole = Math.floor(val);
+      const remainder = val - whole;
+      const sixteenths = Math.round(remainder * 16);
+      
+      if (sixteenths === 0) return `${whole}"`;
+      if (sixteenths === 16) return `${whole + 1}"`;
+
+      let num = sixteenths;
+      let den = 16;
+      while (num % 2 === 0 && den % 2 === 0) {
+        num /= 2;
+        den /= 2;
+      }
+      return whole > 0 ? `${whole} ${num}/${den}"` : `${num}/${den}"`;
+    }
+
+    // Process OCR via Tesseract.js
+    async function handleImageUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const preview = document.getElementById('imagePreview');
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = 'block';
+
+      const status = document.getElementById('ocrStatus');
+      status.innerText = "Analyzing print for dimensions & angles...";
+
+      try {
+        const worker = await Tesseract.createWorker('eng');
+        const ret = await worker.recognize(file);
+        document.getElementById('rawOcrText').value = ret.data.text;
+        status.innerText = "OCR Complete. Review raw text and click 'Auto-Fill'.";
+        await worker.terminate();
+      } catch (err) {
+        status.innerText = "Error reading image. You can manually enter dimensions below.";
+        console.error(err);
+      }
+    }
+
+    // Basic heuristic parser for typical precast drawings
+    function parseOcrTextToInputs() {
+      const text = document.getElementById('rawOcrText').value;
+      if (!text) return;
+
+      // Search for patterns like 36x48, 36" x 48", 36 1/2, or specific tags
+      const dimRegex = /(\d+(\.\d+)?)\s*["']?\s*[xX]\s*(\d+(\.\d+)?)/;
+      const match = text.match(dimRegex);
+
+      if (match) {
+        document.getElementById('openWidth').value = match[1];
+        document.getElementById('openHeight').value = match[3];
+        document.getElementById('itemMark').value = "SCAN-" + Math.floor(Math.random() * 900 + 100);
+      }
+
+      // Check for divider or angled indicators
+      if (/divider|plywood|slope|deg|angle/i.test(text)) {
+        document.getElementById('itemType').value = 'divider';
+        toggleItemFields();
+      }
+    }
+
+    function addItem() {
+      const type = document.getElementById('itemType').value;
+      const mark = document.getElementById('itemMark').value || 'ITEM';
+      const qty = parseInt(document.getElementById('itemQty').value) || 1;
+
+      if (type === 'window_door') {
+        const w = parseFloat(document.getElementById('openWidth').value);
+        const h = parseFloat(document.getElementById('openHeight').value);
+        const rip = parseFloat(document.getElementById('openRipWidth').value) || 10.38;
+        const core = document.getElementById('openCoreType').value;
+
+        if (isNaN(w) || isNaN(h)) {
+          alert('Please enter valid inside width and height.');
+          return;
+        }
+
+        // Inside Clear Dimension Box Construction:
+        // Top and Bottom run the inside width.
+        // Left and Right sides = inside height + (2 * 1.5") to cap the top & bottom.
+        const horizCut = w;
+        const vertCut = h + (2 * LUMBER_ACTUAL_THICKNESS);
+
+        // Add Horizontal headers/sills (2 per box * qty)
+        cutItems.push({
+          id: Date.now() + 1,
+          mark: mark,
+          qty: 2 * qty,
+          material: '2x12 Ripped',
+          tagClass: 'tag-2x12',
+          width: rip,
+          cutLength: horizCut,
+          angles: '90° / 90° (Square)',
+          desc: `Header & Sill (Inside Width) - ${core === 'solid_concrete' ? 'Stripped on site' : 'Standard Buck'}`
+        });
+
+        // Add Vertical sides/jambs (2 per box * qty)
+        cutItems.push({
+          id: Date.now() + 2,
+          mark: mark,
+          qty: 2 * qty,
+          material: '2x12 Ripped',
+          tagClass: 'tag-2x12',
+          width: rip,
+          cutLength: vertCut,
+          angles: '90° / 90° (Square)',
+          desc: `Jambs / Sides (Inside Height + 3" Butt Cap)`
+        });
+
+      } else {
+        // Custom Plywood Divider Engine
+        const len = parseFloat(document.getElementById('divLength').value);
+        const startH = parseFloat(document.getElementById('divStartHeight').value);
+        const endH = parseFloat(document.getElementById('divEndHeight').value);
+        const plyThick = parseFloat(document.getElementById('divThickness').value) || 0.75;
+
+        if (isNaN(len) || isNaN(startH) || isNaN(endH)) {
+          alert('Please enter length, start height, and end height.');
+          return;
+        }
+
+        const deltaH = Math.abs(endH - startH);
+        let angleDeg = 90;
+        let trueSlopeLength = len;
+
+        if (deltaH > 0) {
+          // Angle of slope = arctan(rise / run)
+          const angleRad = Math.atan(deltaH / len);
+          angleDeg = (angleRad * (180 / Math.PI)).toFixed(1);
+          trueSlopeLength = Math.sqrt((len * len) + (deltaH * deltaH));
+        }
+
+        const angleDesc = deltaH === 0 
+          ? '90° Square Cuts' 
+          : `Miter: ${angleDeg}° | Top Slope Cut: ${toFraction(trueSlopeLength)}`;
+
+        cutItems.push({
+          id: Date.now(),
+          mark: mark,
+          qty: qty,
+          material: `${plyThick}" Plywood`,
+          tagClass: 'tag-plywood',
+          width: Math.max(startH, endH),
+          cutLength: len,
+          angles: angleDesc,
+          desc: `Divider Panel (Start: ${toFraction(startH)}, End: ${toFraction(endH)}, Run: ${toFraction(len)})`
+        });
+      }
+
+      renderCutList();
+    }
+
+    function removeItem(id) {
+      cutItems = cutItems.filter(item => item.id !== id);
+      renderCutList();
+    }
+
+    function clearList() {
+      if (confirm('Clear entire cut sheet?')) {
+        cutItems = [];
+        renderCutList();
+      }
+    }
+
+    function renderCutList() {
+      const tbody = document.getElementById('cutListBody');
+      tbody.innerHTML = '';
+
+      let totalPieces = 0;
+      let totalLinearInches2x12 = 0;
+
+      cutItems.forEach(item => {
+        totalPieces += item.qty;
+        if (item.material.includes('2x12')) {
+          totalLinearInches2x12 += (item.cutLength * item.qty);
+        }
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${item.mark}</strong></td>
+          <td><strong>${item.qty}</strong></td>
+          <td><span class="tag ${item.tagClass}">${item.material}</span></td>
+          <td>${item.width.toFixed(2)}"</td>
+          <td><strong>${toFraction(item.cutLength)}</strong> <span style="color:var(--text-muted); font-size:0.75rem;">(${item.cutLength.toFixed(2)}")</span></td>
+          <td>${item.angles}</td>
+          <td>${item.desc}</td>
+          <td class="no-print"><button class="btn btn-danger" style="padding: 4px 8px; font-size: 0.75rem;" onclick="removeItem(${item.id})">X</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const totalLbrFeet = (totalLinearInches2x12 / 12).toFixed(1);
+      document.getElementById('summaryStats').innerText = `Total Pieces: ${totalPieces} | Total 2x12 Ripped Linear Feet: ${totalLbrFeet} LF`;
+    }
+
+    function exportCSV() {
+      if (cutItems.length === 0) return alert('No cuts to export.');
+      let csv = 'Mark,Quantity,Material,Width (In),Cut Length (In),Cut Length (Fraction),Angles,Description\n';
+      cutItems.forEach(i => {
+        csv += `"${i.mark}",${i.qty},"${i.material}",${i.width},${i.cutLength.toFixed(3)},"${toFraction(i.cutLength)}","${i.angles}","${i.desc}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('href', url);
+      a.setAttribute('download', `Shop_CutList_${new Date().toISOString().slice(0,10)}.csv`);
+      a.click();
+    }
+  </script>
+</body>
+</html>
