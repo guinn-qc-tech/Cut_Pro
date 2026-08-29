@@ -41,8 +41,8 @@
     .ocr-box:hover { border-color: var(--accent); }
     #imagePreview { max-width: 100%; max-height: 200px; object-fit: contain; margin-top: 10px; display: none; }
     .table-container { overflow-x: auto; margin-top: 10px; }
-    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
-    th { background: #262c36; color: var(--accent); padding: 8px 10px; border: 1px solid var(--border); text-transform: uppercase; font-size: 0.75rem; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
+    th { background: #262c36; color: var(--accent); padding: 8px 10px; border: 1px solid var(--border); text-transform: uppercase; font-size: 0.72rem; }
     td { padding: 8px 10px; border: 1px solid var(--border); }
     tr:nth-child(even) { background: #171b21; }
     .tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
@@ -66,7 +66,7 @@
   <div class="header no-print">
     <div>
       <h1>Precast Shop Carpentry Engine</h1>
-      <span style="color: var(--text-muted); font-size: 0.85rem;">2x12 Rip: 10.38" (+3.25" Top/Bottom Cap) | 0.75" Plywood Custom Dividers (10.5" Form Depth)</span>
+      <span style="color: var(--text-muted); font-size: 0.85rem;">2x12 Openings (Top/Bottom +3.25" Cap) | 0.75" Plywood Sloped Dividers (10.5" Bed Depth)</span>
     </div>
     <button class="btn btn-secondary" onclick="window.print()">Print Cut Sheet</button>
   </div>
@@ -95,17 +95,51 @@
           <div class="form-group">
             <label>Item Type</label>
             <select id="itemType" onchange="toggleItemFields()">
-              <option value="window_door">Box Window / Door (2x12 Ripped 10.38")</option>
               <option value="divider">Custom Divider (0.75" Plywood)</option>
+              <option value="window_door">Box Window / Door (2x12 Ripped 10.38")</option>
             </select>
           </div>
           <div class="form-group">
             <label>Mark / Identifier</label>
-            <input type="text" id="itemMark" placeholder="e.g., W-101, 13F, DIV-A">
+            <input type="text" id="itemMark" placeholder="e.g., 13F, DIV-A, W-101">
           </div>
         </div>
 
-        <div id="openingFields">
+        <div id="dividerFields">
+          <div class="row">
+            <div class="form-group">
+              <label>Panel Cut Length (Inches along Bed)</label>
+              <input type="number" step="0.0625" id="divPanelHeight" placeholder="e.g., 120 or 68.5">
+            </div>
+            <div class="form-group">
+              <label>Form Bed Depth (Side A - Standard 10.5")</label>
+              <input type="number" step="0.0625" id="divFormDepth" value="10.5">
+            </div>
+          </div>
+          <div class="row">
+            <div class="form-group">
+              <label>Slope Offset / Delta (Side B - Inches)</label>
+              <input type="number" step="0.0625" id="divSlopeOffset" placeholder="e.g., 8.75 or 2.0625 (2 1/16&quot;)">
+            </div>
+            <div class="form-group">
+              <label>Angle Mode / Override</label>
+              <select id="divAnglePreset" onchange="handleAnglePresetChange()">
+                <option value="calc">Calculate from Offset (Side B)</option>
+                <option value="45">45° Divider (Offset = 10.5")</option>
+                <option value="22.5">22.5° Divider (Offset = 4 3/8")</option>
+                <option value="78.75">78.75° Plan / 11.25° Saw (Offset = 2 1/16")</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div class="form-group">
+              <label>Plywood Thickness</label>
+              <input type="number" step="0.01" id="divThickness" value="0.75">
+            </div>
+          </div>
+        </div>
+
+        <div id="openingFields" style="display: none;">
           <div class="row">
             <div class="form-group">
               <label>Inside Width (Inches)</label>
@@ -131,40 +165,6 @@
           </div>
         </div>
 
-        <div id="dividerFields" style="display: none;">
-          <div class="row">
-            <div class="form-group">
-              <label>Panel Length / Cut Length (Inches)</label>
-              <input type="number" step="0.0625" id="divPanelHeight" placeholder="e.g., 120 or 68.5 (5'-8 1/2&quot;)">
-            </div>
-            <div class="form-group">
-              <label>Form Depth (Side A - Fixed)</label>
-              <input type="number" step="0.0625" id="divFormDepth" value="10.5">
-            </div>
-          </div>
-          <div class="row">
-            <div class="form-group">
-              <label>Slope Offset / Difference (Side B - &Delta; Inches)</label>
-              <input type="number" step="0.0625" id="divSlopeOffset" placeholder="e.g., 8.75 or 2.0625 (2 1/16&quot;)">
-            </div>
-            <div class="form-group">
-              <label>Angle Mode / Override</label>
-              <select id="divAnglePreset" onchange="handleAnglePresetChange()">
-                <option value="calc">Calculate from Offset (Side B)</option>
-                <option value="45">45° Divider (Standard - 10.5" Offset)</option>
-                <option value="22.5">22.5° Divider (4 3/8" Offset)</option>
-                <option value="78.75">78.75° Base / 11.25° Saw (2 1/16" Offset)</option>
-              </select>
-            </div>
-          </div>
-          <div class="row">
-            <div class="form-group">
-              <label>Plywood Thickness</label>
-              <input type="number" step="0.01" id="divThickness" value="0.75">
-            </div>
-          </div>
-        </div>
-
         <div class="form-group">
           <label>Quantity</label>
           <input type="number" id="itemQty" value="1" min="1">
@@ -186,10 +186,10 @@
                 <th>Mark</th>
                 <th>Qty</th>
                 <th>Material</th>
-                <th>Ripped Width</th>
+                <th>Board Width (Hypotenuse)</th>
                 <th>Cut Length</th>
-                <th>Saw Bevel / Angle</th>
-                <th>Description / Placement</th>
+                <th>Top & Bottom Bevel</th>
+                <th>Placement / Saw Notes</th>
                 <th class="no-print">Action</th>
               </tr>
             </thead>
@@ -221,7 +221,7 @@
       const depth = parseFloat(document.getElementById('divFormDepth').value) || 10.5;
       
       if (preset === '45') {
-        document.getElementById('divSlopeOffset').value = depth.toFixed(4); // 10.5" for 45 deg
+        document.getElementById('divSlopeOffset').value = depth.toFixed(4);
       } else if (preset === '22.5') {
         document.getElementById('divSlopeOffset').value = "4.375"; // 4 3/8"
       } else if (preset === '78.75') {
@@ -248,7 +248,7 @@
       return whole > 0 ? `${whole} ${num}/${den}"` : `${num}/${den}"`;
     }
 
-    // Helper to parse imperial strings (e.g. 5'-8 1/2", 37", 2 1/16) to decimal
+    // Parse imperial strings (e.g. 5'-8 1/2", 37", 2 1/16) to decimal
     function parseImperialToInches(str) {
       if (!str) return null;
       str = str.trim().replace(/["']/g, '');
@@ -302,16 +302,13 @@
       }
     }
 
-    // Advanced Parser for Precast Prints
+    // Heuristic Parser for Precast Prints
     function parseOcrTextToInputs() {
       const text = document.getElementById('rawOcrText').value;
       if (!text) return;
 
-      // Check for offset patterns like 2 1/16, 4 3/8, 8.75
       const offsetMatch = text.match(/(?:offset|diff)?\s*(\d+[\s\-_]+(?:\d+\/\d+))\s*["']?/i);
       const angleMatch = text.match(/(\d+(?:\.\d+)?)\s*°/i) || text.match(/(78\.75|22\.5|45)/);
-
-      // Check for opening patterns like 37" x 63" or 3'-0 1/2" x 5'-3"
       const openingMatch = text.match(/(\d+[\d\s\/\.'"-]*)\s*[xX]\s*(\d+[\d\s\/\.'"-]*)/);
 
       if (openingMatch) {
@@ -360,9 +357,7 @@
           return;
         }
 
-        // Shop Rule: Top & Bottom Headers are Inside Width + 3.25"
         const headerCut = w + HEADER_CAP_OVERAGE;
-        // Shop Rule: Vertical Jambs are exact Inside Height
         const jambCut = h;
 
         // Top and Bottom Headers (2 per box * qty)
@@ -374,8 +369,8 @@
           tagClass: 'tag-2x12',
           width: rip,
           cutLength: headerCut,
-          angles: '90° / 90° (Square)',
-          desc: `Top Header & Bottom Sill (Inside Width + 3 1/4" Over Cap) - ${core === 'solid_concrete' ? 'Stripped on site' : 'Standard Buck'}`
+          angles: '90° Square Cuts',
+          desc: `Top Header & Bottom Sill (Inside Width + 3 1/4" Cap) - ${core === 'solid_concrete' ? 'Stripped on site' : 'Standard Buck'}`
         });
 
         // Vertical Jambs / Sides (2 per box * qty)
@@ -387,15 +382,15 @@
           tagClass: 'tag-2x12',
           width: rip,
           cutLength: jambCut,
-          angles: '90° / 90° (Square)',
+          angles: '90° Square Cuts',
           desc: `Vertical Side Jambs (Inside Height Square)`
         });
 
       } else {
         // Custom 0.75" Plywood Divider Calculations
         const panelLength = parseFloat(document.getElementById('divPanelHeight').value) || 0;
-        const sideA = parseFloat(document.getElementById('divFormDepth').value) || 10.5; // Form Depth (a = 10.5")
-        let sideB = parseFloat(document.getElementById('divSlopeOffset').value) || 0; // Offset Diff (b)
+        const sideA = parseFloat(document.getElementById('divFormDepth').value) || 10.5; // Form Bed Height (a = 10.5")
+        let sideB = parseFloat(document.getElementById('divSlopeOffset').value) || 0; // Slope Offset Delta (b)
         const plyThick = parseFloat(document.getElementById('divThickness').value) || 0.75;
         const preset = document.getElementById('divAnglePreset').value;
 
@@ -403,25 +398,24 @@
           sideB = sideA; // 45° divider offset equals form depth
         }
 
-        let betaAngle = 0; // Saw blade bevel angle off vertical/square
-        let alphaAngle = 90; // Base triangle angle
-        let sideC_Hypotenuse = sideA; // Ripped width for sloped board
+        let betaAngle = 0; // Saw bevel angle (blade tilt off vertical)
+        let sideC_Hypotenuse = sideA; // Total Board Width along slope
+        let edgeLongToShort = 0;
 
         if (sideB > 0) {
-          // Right Triangle: tan(beta) = b / a
+          // tan(beta) = b / a
           const betaRad = Math.atan(sideB / sideA);
           betaAngle = (betaRad * (180 / Math.PI)).toFixed(1);
-          alphaAngle = (90 - betaAngle).toFixed(1);
           
-          // Side C (Hypotenuse / Sloped Width) = sqrt(a^2 + b^2)
+          // Board Width (Side C) = sqrt(a^2 + b^2)
           sideC_Hypotenuse = Math.sqrt((sideA * sideA) + (sideB * sideB));
+          edgeLongToShort = plyThick * Math.tan(betaRad);
         }
 
         const angleDesc = sideB === 0 
-          ? '90° Square Cuts' 
-          : `Saw Bevel (β): ${betaAngle}° | Base (α): ${alphaAngle}°`;
+          ? '90° Square Edges' 
+          : `Rip Bevel: ${betaAngle}° (Top & Bottom Edges Parallel) | Edge Shift: ${toFraction(edgeLongToShort)}`;
 
-        // Add the primary sloped board (Area C)
         cutItems.push({
           id: Date.now(),
           mark: mark,
@@ -431,7 +425,7 @@
           width: sideC_Hypotenuse,
           cutLength: panelLength > 0 ? panelLength : sideC_Hypotenuse,
           angles: angleDesc,
-          desc: `Sloped Top Cap Board (Area C: ${toFraction(sideC_Hypotenuse)} Ripped Width [${sideC_Hypotenuse.toFixed(2)}"], Form Depth: ${sideA}", Offset Diff: ${toFraction(sideB)})`
+          desc: `Sloped Divider Board (Rip Width: ${toFraction(sideC_Hypotenuse)} [${sideC_Hypotenuse.toFixed(2)}"], Form Bed: ${sideA}", Offset Diff: ${toFraction(sideB)})`
         });
       }
 
