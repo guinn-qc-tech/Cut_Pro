@@ -92,7 +92,9 @@
   </div>
 
   <div class="grid">
+    <!-- Left Column: Inputs, Scanning, Inventory, Jobs -->
     <div>
+      <!-- Job Management -->
       <div class="card no-print">
         <h2>Job Management</h2>
         <div class="row">
@@ -118,6 +120,7 @@
         </div>
       </div>
 
+      <!-- Live Shop Lumber Inventory (Stored on Phone) -->
       <div class="card no-print">
         <h2>Local Shop Lumber Inventory (Rack Stock)</h2>
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px;">
@@ -180,6 +183,7 @@
         </div>
       </div>
 
+      <!-- OCR & Camera Module -->
       <div class="card no-print">
         <h2>Job Print Scanner / Photo Input</h2>
         <div class="ocr-box" onclick="document.getElementById('fileInput').click()">
@@ -195,6 +199,7 @@
         <button class="btn btn-secondary btn-block" onclick="parseOcrTextToInputs()">Auto-Fill From Scanned Text</button>
       </div>
 
+      <!-- Manual / Override Entry Form -->
       <div class="card no-print">
         <h2>Add Shop Build Item</h2>
         
@@ -215,6 +220,7 @@
           </div>
         </div>
 
+        <!-- Box Opening Inputs (Window & Door) -->
         <div id="openingFields" class="input-section" style="display: none;">
           <div class="row">
             <div class="form-group">
@@ -241,6 +247,7 @@
           </div>
         </div>
 
+        <!-- Slab / Lid Form Inputs -->
         <div id="slabFields" class="input-section">
           <div class="row">
             <div class="form-group">
@@ -267,6 +274,7 @@
           </div>
         </div>
 
+        <!-- Ledge Blockout Inputs -->
         <div id="ledgeFields" class="input-section" style="display: none;">
           <div class="row">
             <div class="form-group">
@@ -283,6 +291,7 @@
           </div>
         </div>
 
+        <!-- Custom Divider Inputs -->
         <div id="dividerFields" class="input-section" style="display: none;">
           <div class="row">
             <div class="form-group">
@@ -320,7 +329,9 @@
       </div>
     </div>
 
+    <!-- Right Column: Live Master Cut Sheet & Stock Optimization -->
     <div>
+      <!-- Saw Cut List -->
       <div class="card print-target">
         <h2>Saw Master Cut List</h2>
         <div id="summaryStats" style="margin-bottom: 8px; color: var(--text-muted); font-size: 0.85rem;"></div>
@@ -349,6 +360,7 @@
         </div>
       </div>
 
+      <!-- Stock Material Optimizer Module -->
       <div class="card print-target">
         <h2>Stock Material Pull & Cutting Optimization</h2>
         <div id="optimizerOutput" style="font-size: 0.9rem; line-height: 1.5;">
@@ -613,7 +625,6 @@
 
       const openingMatch = text.match(/(\d+[\d\s\/\.'"-]*)\s*[xX]\s*(\d+[\d\s\/\.'"-]*)/);
       if (openingMatch) {
-        // If slab is found, maybe those dims are the slab dims
         if (slabMatch) {
             document.getElementById('slabWidth').value = parseImperialToInches(openingMatch[1]);
             document.getElementById('slabLength').value = parseImperialToInches(openingMatch[2]);
@@ -869,10 +880,8 @@
     async function shareOrExport() {
       if (cutItems.length === 0) return alert('No cuts to share.');
       
-      // 1. Group all cuts by material and length
       let aggregatedCuts = {};
       cutItems.forEach(item => {
-          // Group key e.g., "2x4_U_45.25"
           let key = `${item.materialCat}_${item.cutLength}`;
           if (!aggregatedCuts[key]) {
               aggregatedCuts[key] = {
@@ -884,7 +893,6 @@
           aggregatedCuts[key].qty += item.qty;
       });
 
-      // 2. Sort into materials array
       let materialsObj = {};
       Object.values(aggregatedCuts).forEach(cut => {
           if (!materialsObj[cut.materialDesc]) materialsObj[cut.materialDesc] = [];
@@ -893,10 +901,9 @@
 
       let shareText = `📋 PRECAST SHOP MASTER CUT LIST\nGenerated: ${new Date().toLocaleDateString()}\n\n`;
       
-      // The Simplified Cut List per the user request: "2x4 - 3' 9" - 2 pieces"
       shareText += `--- CUT LIST ---\n`;
       for (let mat in materialsObj) {
-          materialsObj[mat].sort((a,b) => b.length - a.length); // Sort longest to shortest
+          materialsObj[mat].sort((a,b) => b.length - a.length); 
           materialsObj[mat].forEach(cut => {
                shareText += `• ${mat} - ${toFeetAndInches(cut.length)} - ${cut.qty} pieces\n`;
           });
