@@ -17,9 +17,7 @@
       --success: #10b981;
       --danger: #ef4444;
       --info: #3b82f6;
-      --purple: #8b5cf6;
-      --red-ledge: #ef4444;
-      --blue-ledge: #3b82f6;
+      --warning: #facc15;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
     body { background: var(--bg-dark); color: var(--text); padding: 16px; font-size: 14px; }
@@ -28,7 +26,7 @@
     .grid { display: grid; grid-template-columns: 1.1fr 1.9fr; gap: 16px; }
     @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
     .card { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 6px; padding: 16px; margin-bottom: 16px; }
-    .card h2 { font-size: 1.05rem; margin-bottom: 12px; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+    .card h2 { font-size: 1.05rem; margin-bottom: 12px; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 6px; display: flex; justify-content: space-between; }
     .form-group { margin-bottom: 12px; }
     label { display: block; margin-bottom: 4px; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
     input, select, textarea { width: 100%; background: #0f1115; border: 1px solid var(--border); color: #fff; padding: 8px 10px; border-radius: 4px; font-size: 0.95rem; }
@@ -40,10 +38,9 @@
     .btn-secondary { background: #374151; color: #fff; }
     .btn-secondary:hover { background: #4b5563; }
     .btn-success { background: var(--success); color: #fff; }
-    .btn-success:hover { background: #059669; }
     .btn-info { background: var(--info); color: #fff; }
-    .btn-info:hover { background: #2563eb; }
     .btn-danger { background: var(--danger); color: #fff; }
+    .btn-warning { background: var(--warning); color: #000; }
     .btn-block { width: 100%; }
     .ocr-box { border: 2px dashed var(--border); padding: 14px; text-align: center; border-radius: 6px; cursor: pointer; margin-bottom: 12px; }
     .ocr-box:hover { border-color: var(--accent); }
@@ -68,6 +65,7 @@
     .inventory-badge strong { font-size: 1.1rem; color: var(--accent); }
     .scrap-tag { color: var(--danger); font-size: 0.8rem; font-weight: bold; }
     .reusable-tag { color: var(--success); font-size: 0.8rem; font-weight: bold; }
+    .shortage-warn { color: var(--danger); font-weight: bold; font-size: 0.85rem; display: block; margin-top: 4px; }
     @media print {
       body { background: #fff; color: #000; padding: 0; }
       .no-print, .btn, .card:not(.print-target) { display: none !important; }
@@ -82,8 +80,8 @@
 
   <div class="header no-print">
     <div>
-      <h1>Precast Carpentry Shop Engine</h1>
-      <span style="color: var(--text-muted); font-size: 0.85rem;">2x12 Openings | Slabs & Ledges (2x6/2x4) | Stock Tracking</span>
+      <h1>Precast Shop Layout Engine</h1>
+      <span style="color: var(--text-muted); font-size: 0.85rem;">Intelligent Packing & Inventory Sync</span>
     </div>
     <div style="display: flex; gap: 8px;">
       <button class="btn btn-info" onclick="shareOrExport()">Share Cut Sheet</button>
@@ -92,11 +90,9 @@
   </div>
 
   <div class="grid">
-    <!-- Left Column: Inputs, Scanning, Inventory, Jobs -->
     <div>
-      <!-- Job Management -->
       <div class="card no-print">
-        <h2>Job Management</h2>
+        <h2>Job & Data Management</h2>
         <div class="row">
           <div class="form-group" style="flex: 2;">
             <label>Save Current Job As:</label>
@@ -118,44 +114,25 @@
             <button class="btn btn-danger" onclick="deleteJob()" style="flex: 1;">Delete</button>
           </div>
         </div>
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 12px 0;">
+        <div class="row">
+          <button class="btn btn-secondary btn-block" onclick="exportDataBackup()">Download Backup (JSON)</button>
+          <button class="btn btn-secondary btn-block" onclick="document.getElementById('importFile').click()">Restore Backup</button>
+          <input type="file" id="importFile" accept=".json" style="display:none" onchange="importDataBackup(event)">
+        </div>
       </div>
 
-      <!-- Live Shop Lumber Inventory (Stored on Phone) -->
       <div class="card no-print">
-        <h2>Local Shop Lumber Inventory (Rack Stock)</h2>
+        <h2>Local Shop Lumber Inventory</h2>
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px;">
-          <div class="inventory-badge">
-            <span>8' 2x12</span>
-            <strong id="invDisplay8">0</strong>
-          </div>
-          <div class="inventory-badge">
-            <span>10' 2x12</span>
-            <strong id="invDisplay10">0</strong>
-          </div>
-          <div class="inventory-badge">
-            <span>12' 2x12</span>
-            <strong id="invDisplay12">0</strong>
-          </div>
-          <div class="inventory-badge">
-            <span>3/4" Ply</span>
-            <strong id="invDisplayPly">0</strong>
-          </div>
-          <div class="inventory-badge">
-            <span>2x4x8 (U)</span>
-            <strong id="invDisplay2x4x8U">0</strong>
-          </div>
-          <div class="inventory-badge">
-            <span>2x6x8 (T)</span>
-            <strong id="invDisplay2x6x8T">0</strong>
-          </div>
-          <div class="inventory-badge">
-            <span>2x6x10 (T)</span>
-            <strong id="invDisplay2x6x10T">0</strong>
-          </div>
-          <div class="inventory-badge">
-            <span>2x6x14 (U)</span>
-            <strong id="invDisplay2x6x14U">0</strong>
-          </div>
+          <div class="inventory-badge"><span>8' 2x12</span><strong id="invDisplay8">0</strong></div>
+          <div class="inventory-badge"><span>10' 2x12</span><strong id="invDisplay10">0</strong></div>
+          <div class="inventory-badge"><span>12' 2x12</span><strong id="invDisplay12">0</strong></div>
+          <div class="inventory-badge"><span>3/4" Ply</span><strong id="invDisplayPly">0</strong></div>
+          <div class="inventory-badge"><span>2x4x8 (U)</span><strong id="invDisplay2x4x8U">0</strong></div>
+          <div class="inventory-badge"><span>2x6x8 (T)</span><strong id="invDisplay2x6x8T">0</strong></div>
+          <div class="inventory-badge"><span>2x6x10 (T)</span><strong id="invDisplay2x6x10T">0</strong></div>
+          <div class="inventory-badge"><span>2x6x14 (U)</span><strong id="invDisplay2x6x14U">0</strong></div>
         </div>
 
         <div class="row">
@@ -166,10 +143,10 @@
               <option value="inv10">10' 2x12 Stick</option>
               <option value="inv12">12' 2x12 Stick</option>
               <option value="invPly">4'x8' 3/4" Plywood</option>
-              <option value="inv2x4x8U">2x4x8 Untreated Stick</option>
-              <option value="inv2x6x8T">2x6x8 Treated Stick</option>
-              <option value="inv2x6x10T">2x6x10 Treated Stick</option>
-              <option value="inv2x6x14U">2x6x14 Untreated Stick</option>
+              <option value="inv2x4x8U">2x4x8 Untreated</option>
+              <option value="inv2x6x8T">2x6x8 Treated</option>
+              <option value="inv2x6x10T">2x6x10 Treated</option>
+              <option value="inv2x6x14U">2x6x14 Untreated</option>
             </select>
           </div>
           <div class="form-group">
@@ -179,27 +156,24 @@
         </div>
         <div class="row">
           <button class="btn btn-secondary btn-block" onclick="updateInventoryDirect()">Update Stock</button>
-          <button class="btn btn-success btn-block" onclick="deductCutListFromInventory()">Deduct Cut List</button>
+          <button class="btn btn-success btn-block" onclick="deductCutListFromInventory()">Deduct List from Stock</button>
         </div>
       </div>
 
-      <!-- OCR & Camera Module -->
       <div class="card no-print">
-        <h2>Job Print Scanner / Photo Input</h2>
+        <h2>Job Print Scanner</h2>
         <div class="ocr-box" onclick="document.getElementById('fileInput').click()">
-          <span>Take Photo / Upload Job Print Detail</span>
+          <span>Take Photo / Upload Detail</span>
           <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none" onchange="handleImageUpload(event)">
-          <img id="imagePreview" alt="Job Print Preview" />
+          <img id="imagePreview" alt="Preview" />
         </div>
         <div id="ocrStatus" class="status-bar"></div>
         <div class="form-group" style="margin-top: 8px;">
-          <label>Parsed Print Text / Notes</label>
           <textarea id="rawOcrText" class="print-raw" placeholder="OCR extracted dimensions appear here..."></textarea>
         </div>
         <button class="btn btn-secondary btn-block" onclick="parseOcrTextToInputs()">Auto-Fill From Scanned Text</button>
       </div>
 
-      <!-- Manual / Override Entry Form -->
       <div class="card no-print">
         <h2>Add Shop Build Item</h2>
         
@@ -209,23 +183,22 @@
             <select id="itemType" onchange="toggleItemFields()">
               <option value="window">Box Window Opening (2x12)</option>
               <option value="door">Box Door Opening (2x12, Field Cut-Out)</option>
-              <option value="ledge">Ledge / Blockout (2x6 Untreated)</option>
+              <option value="ledge">Ledge / Blockout (2x6)</option>
               <option value="slab" selected>Slab / Lid Form (2x6 Default)</option>
               <option value="divider">Custom Divider Bulkhead (0.75" Plywood)</option>
             </select>
           </div>
           <div class="form-group">
             <label>Mark / Identifier</label>
-            <input type="text" id="itemMark" placeholder="e.g., W-101, L-1, S-1">
+            <input type="text" id="itemMark" placeholder="e.g., W-101, L-1">
           </div>
         </div>
 
-        <!-- Box Opening Inputs (Window & Door) -->
         <div id="openingFields" class="input-section" style="display: none;">
           <div class="row">
             <div class="form-group">
               <label>Inside Width (Inches)</label>
-              <input type="number" step="0.0625" id="openWidth" placeholder="e.g., 36.0 or 37.0">
+              <input type="number" step="0.0625" id="openWidth" placeholder="e.g., 36.0">
             </div>
             <div class="form-group">
               <label>Inside Height (Inches)</label>
@@ -247,7 +220,6 @@
           </div>
         </div>
 
-        <!-- Slab / Lid Form Inputs -->
         <div id="slabFields" class="input-section">
           <div class="row">
             <div class="form-group">
@@ -261,25 +233,26 @@
           </div>
           <div class="row">
             <div class="form-group">
-              <label>Form Material (Untreated)</label>
+              <label>Form Material (Treated/Untreated)</label>
               <select id="slabMaterial">
-                <option value="2x6">2x6x14 Untreated (5.5" Tall)</option>
-                <option value="2x4">2x4x8 Untreated (3.5" Tall)</option>
+                <option value="2x6_U">2x6x14 Untreated (5.5")</option>
+                <option value="2x4_U">2x4x8 Untreated (3.5")</option>
+                <option value="2x6_T8">2x6x8 Treated (5.5")</option>
+                <option value="2x6_T10">2x6x10 Treated (5.5")</option>
               </select>
             </div>
             <div class="form-group">
-              <label>Split Sections (Dividers)</label>
-              <input type="number" step="1" id="slabSections" value="1" min="1" placeholder="e.g., 2 for split pour">
+              <label>Split Sections</label>
+              <input type="number" step="1" id="slabSections" value="1" min="1">
             </div>
           </div>
         </div>
 
-        <!-- Ledge Blockout Inputs -->
         <div id="ledgeFields" class="input-section" style="display: none;">
           <div class="row">
             <div class="form-group">
               <label>Ledge Linear Length (Inches)</label>
-              <input type="number" step="0.0625" id="ledgeLength" placeholder="e.g., 77.5 (6'-5&quot;)">
+              <input type="number" step="0.0625" id="ledgeLength" placeholder="e.g., 77.5">
             </div>
             <div class="form-group">
               <label>Ledge Type</label>
@@ -289,14 +262,23 @@
               </select>
             </div>
           </div>
+          <div class="row">
+            <div class="form-group">
+              <label>Form Material</label>
+              <select id="ledgeMaterial">
+                <option value="2x6_U">2x6x14 Untreated</option>
+                <option value="2x6_T8">2x6x8 Treated</option>
+                <option value="2x6_T10">2x6x10 Treated</option>
+              </select>
+            </div>
+          </div>
         </div>
 
-        <!-- Custom Divider Inputs -->
         <div id="dividerFields" class="input-section" style="display: none;">
           <div class="row">
             <div class="form-group">
               <label>Panel Length (Inches along Bed)</label>
-              <input type="number" step="0.0625" id="divPanelHeight" placeholder="e.g., 120 or 68.5">
+              <input type="number" step="0.0625" id="divPanelHeight" placeholder="e.g., 120">
             </div>
             <div class="form-group">
               <label>Form Bed Depth (Side A)</label>
@@ -306,14 +288,14 @@
           <div class="row">
             <div class="form-group">
               <label>Slope Offset / Delta (Side B)</label>
-              <input type="number" step="0.0625" id="divSlopeOffset" placeholder="e.g., 8.75 or 2.0625">
+              <input type="number" step="0.0625" id="divSlopeOffset" placeholder="e.g., 8.75">
             </div>
             <div class="form-group">
-              <label>Angle Preset / Override</label>
+              <label>Angle Preset</label>
               <select id="divAnglePreset" onchange="handleAnglePresetChange()">
                 <option value="calc">Calculate from Offset</option>
-                <option value="45">45° Divider (Offset = 10.5")</option>
-                <option value="22.5">22.5° Divider (Offset = 4 3/8")</option>
+                <option value="45">45° Divider</option>
+                <option value="22.5">22.5° Divider</option>
                 <option value="78.75">78.75° Plan / 11.25° Saw</option>
               </select>
             </div>
@@ -329,9 +311,7 @@
       </div>
     </div>
 
-    <!-- Right Column: Live Master Cut Sheet & Stock Optimization -->
     <div>
-      <!-- Saw Cut List -->
       <div class="card print-target">
         <h2>Saw Master Cut List</h2>
         <div id="summaryStats" style="margin-bottom: 8px; color: var(--text-muted); font-size: 0.85rem;"></div>
@@ -354,17 +334,15 @@
         </div>
 
         <div style="margin-top: 14px; display: flex; gap: 8px;" class="no-print">
-          <button class="btn btn-info" onclick="shareOrExport()">Share / Messenger</button>
-          <button class="btn btn-secondary" onclick="exportCSV()">Download CSV</button>
+          <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
           <button class="btn btn-danger" onclick="clearList()">Clear All</button>
         </div>
       </div>
 
-      <!-- Stock Material Optimizer Module -->
       <div class="card print-target">
-        <h2>Stock Material Pull & Cutting Optimization</h2>
+        <h2>Material Pull & Stock Shortage Check</h2>
         <div id="optimizerOutput" style="font-size: 0.9rem; line-height: 1.5;">
-          <p style="color: var(--text-muted);">Add items above to calculate lumber sticks and plywood yield.</p>
+          <p style="color: var(--text-muted);">Add items above to calculate lumber sticks and check against local inventory.</p>
         </div>
       </div>
     </div>
@@ -372,7 +350,7 @@
 
   <script>
     let cutItems = [];
-    let lastCalculatedDemand = { count8: 0, count10: 0, count12: 0, count2x4: 0, count2x6: 0, sheetsPly: 0 };
+    let lastCalculatedDemand = { count8: 0, count10: 0, count12: 0, count2x4: 0, count2x6U: 0, count2x6T8: 0, count2x6T10: 0, sheetsPly: 0 };
 
     const HEADER_CAP_OVERAGE = 3.25; 
     const DOOR_SILL_OVERAGE = 0.125; 
@@ -380,17 +358,48 @@
     const SAW_KERF = 0.125; 
     const SCRAP_THRESHOLD = 24.0; 
 
-    // Job Management Logic
+    // ---- Data Management (JSON Export/Import) ----
+    function exportDataBackup() {
+      const backupData = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('shop_')) {
+          backupData[key] = localStorage.getItem(key);
+        }
+      }
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData));
+      const a = document.createElement('a');
+      a.setAttribute("href", dataStr);
+      a.setAttribute("download", `ShopBackup_${new Date().toISOString().slice(0,10)}.json`);
+      a.click();
+    }
+
+    function importDataBackup(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          for (const key in data) {
+            if (key.startsWith('shop_')) localStorage.setItem(key, data[key]);
+          }
+          alert("Backup Restored Successfully!");
+          location.reload();
+        } catch (err) { alert("Invalid backup file."); }
+      };
+      reader.readAsText(file);
+    }
+
+    // ---- Job Management ----
     function populateJobDropdown() {
       const dropdown = document.getElementById('savedJobsDropdown');
       dropdown.innerHTML = '<option value="">-- Select a Job --</option>';
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key.startsWith('shop_job_')) {
-          const jobName = key.replace('shop_job_', '');
           const option = document.createElement('option');
-          option.value = key;
-          option.text = jobName;
+          option.value = key; option.text = key.replace('shop_job_', '');
           dropdown.appendChild(option);
         }
       }
@@ -400,46 +409,39 @@
       const jobName = document.getElementById('jobNameInput').value.trim();
       if (!jobName) return alert('Please enter a Job Name to save.');
       if (cutItems.length === 0) return alert('No cuts to save.');
-      
-      const key = 'shop_job_' + jobName;
-      localStorage.setItem(key, JSON.stringify(cutItems));
+      localStorage.setItem('shop_job_' + jobName, JSON.stringify(cutItems));
       populateJobDropdown();
-      alert(`Job "${jobName}" saved successfully.`);
+      alert(`Job "${jobName}" saved.`);
     }
 
     function loadJob() {
       const key = document.getElementById('savedJobsDropdown').value;
-      if (!key) return alert('Please select a job to load.');
-      
+      if (!key) return alert('Select a job.');
       const savedData = localStorage.getItem(key);
       if (savedData) {
         cutItems = JSON.parse(savedData);
-        renderCutList();
-        optimizeStock();
+        renderCutList(); optimizeStock();
         document.getElementById('jobNameInput').value = key.replace('shop_job_', '');
       }
     }
 
     function deleteJob() {
       const key = document.getElementById('savedJobsDropdown').value;
-      if (!key) return alert('Please select a job to delete.');
-      
-      if (confirm(`Are you sure you want to delete ${key.replace('shop_job_', '')}?`)) {
-        localStorage.removeItem(key);
-        populateJobDropdown();
-        document.getElementById('savedJobsDropdown').value = '';
+      if (!key) return;
+      if (confirm(`Delete ${key.replace('shop_job_', '')}?`)) {
+        localStorage.removeItem(key); populateJobDropdown(); document.getElementById('savedJobsDropdown').value = '';
       }
     }
 
-    // Inventory Logic
+    // ---- Inventory Tracking ----
     function initInventory() {
       if (localStorage.getItem('shop_inv_8') === null) localStorage.setItem('shop_inv_8', '15');
       if (localStorage.getItem('shop_inv_10') === null) localStorage.setItem('shop_inv_10', '25');
       if (localStorage.getItem('shop_inv_12') === null) localStorage.setItem('shop_inv_12', '10');
       if (localStorage.getItem('shop_inv_ply') === null) localStorage.setItem('shop_inv_ply', '12');
       if (localStorage.getItem('shop_inv_2x4x8_u') === null) localStorage.setItem('shop_inv_2x4x8_u', '20');
-      if (localStorage.getItem('shop_inv_2x6x8_t') === null) localStorage.setItem('shop_inv_2x6x8_t', '0');
-      if (localStorage.getItem('shop_inv_2x6x10_t') === null) localStorage.setItem('shop_inv_2x6x10_t', '0');
+      if (localStorage.getItem('shop_inv_2x6x8_t') === null) localStorage.setItem('shop_inv_2x6x8_t', '15');
+      if (localStorage.getItem('shop_inv_2x6x10_t') === null) localStorage.setItem('shop_inv_2x6x10_t', '15');
       if (localStorage.getItem('shop_inv_2x6x14_u') === null) localStorage.setItem('shop_inv_2x6x14_u', '15');
       renderInventoryDisplay();
     }
@@ -470,33 +472,34 @@
       else if (type === 'inv2x6x14U') key = 'shop_inv_2x6x14_u';
 
       let current = parseInt(localStorage.getItem(key)) || 0;
-      let updated = Math.max(0, current + count);
-      localStorage.setItem(key, updated.toString());
-      renderInventoryDisplay();
-      document.getElementById('invCountInput').value = '';
+      localStorage.setItem(key, Math.max(0, current + count).toString());
+      renderInventoryDisplay(); document.getElementById('invCountInput').value = '';
     }
 
     function deductCutListFromInventory() {
-      if (cutItems.length === 0) return alert('No cuts in current list to deduct.');
+      if (cutItems.length === 0) return alert('No cuts to deduct.');
       
-      let cur8 = parseInt(localStorage.getItem('shop_inv_8')) || 0;
-      let cur10 = parseInt(localStorage.getItem('shop_inv_10')) || 0;
-      let cur12 = parseInt(localStorage.getItem('shop_inv_12')) || 0;
-      let curPly = parseInt(localStorage.getItem('shop_inv_ply')) || 0;
-      let cur2x4 = parseInt(localStorage.getItem('shop_inv_2x4x8_u')) || 0;
-      let cur2x6 = parseInt(localStorage.getItem('shop_inv_2x6x14_u')) || 0;
+      const map = [
+        ['shop_inv_8', lastCalculatedDemand.count8],
+        ['shop_inv_10', lastCalculatedDemand.count10],
+        ['shop_inv_12', lastCalculatedDemand.count12],
+        ['shop_inv_ply', lastCalculatedDemand.sheetsPly],
+        ['shop_inv_2x4x8_u', lastCalculatedDemand.count2x4],
+        ['shop_inv_2x6x14_u', lastCalculatedDemand.count2x6U],
+        ['shop_inv_2x6x8_t', lastCalculatedDemand.count2x6T8],
+        ['shop_inv_2x6x10_t', lastCalculatedDemand.count2x6T10]
+      ];
 
-      localStorage.setItem('shop_inv_8', Math.max(0, cur8 - lastCalculatedDemand.count8).toString());
-      localStorage.setItem('shop_inv_10', Math.max(0, cur10 - lastCalculatedDemand.count10).toString());
-      localStorage.setItem('shop_inv_12', Math.max(0, cur12 - lastCalculatedDemand.count12).toString());
-      localStorage.setItem('shop_inv_ply', Math.max(0, curPly - lastCalculatedDemand.sheetsPly).toString());
-      localStorage.setItem('shop_inv_2x4x8_u', Math.max(0, cur2x4 - lastCalculatedDemand.count2x4).toString());
-      localStorage.setItem('shop_inv_2x6x14_u', Math.max(0, cur2x6 - lastCalculatedDemand.count2x6).toString());
+      map.forEach(([key, demand]) => {
+        let current = parseInt(localStorage.getItem(key)) || 0;
+        localStorage.setItem(key, Math.max(0, current - demand).toString());
+      });
 
-      renderInventoryDisplay();
-      alert(`Deducted from Inventory:\n• 2x12: -${lastCalculatedDemand.count8} (8'), -${lastCalculatedDemand.count10} (10'), -${lastCalculatedDemand.count12} (12')\n• 3/4" Ply: -${lastCalculatedDemand.sheetsPly}\n• 2x4x8 (U): -${lastCalculatedDemand.count2x4}\n• 2x6x14 (U): -${lastCalculatedDemand.count2x6}`);
+      renderInventoryDisplay(); optimizeStock();
+      alert('Cut list deducted from inventory rack successfully.');
     }
 
+    // ---- App Logic ----
     function toggleItemFields() {
       document.querySelectorAll('.input-section').forEach(el => el.style.display = 'none');
       const type = document.getElementById('itemType').value;
@@ -534,23 +537,15 @@
       const remainder = inchesDec - wholeInches;
       const sixteenths = Math.round(remainder * 16);
 
-      let finalInches = wholeInches;
-      let fracStr = '';
-
-      if (sixteenths === 16) {
-        finalInches += 1;
-      } else if (sixteenths > 0) {
-        let num = sixteenths;
-        let den = 16;
+      let finalInches = wholeInches; let fracStr = '';
+      if (sixteenths === 16) { finalInches += 1; } 
+      else if (sixteenths > 0) {
+        let num = sixteenths; let den = 16;
         while (num % 2 === 0 && den % 2 === 0) { num /= 2; den /= 2; }
         fracStr = ` ${num}/${den}`;
       }
-
-      if (feet > 0) {
-        return finalInches > 0 || fracStr !== '' ? `${feet}' ${finalInches}${fracStr}"` : `${feet}'`;
-      } else {
-        return finalInches > 0 || fracStr !== '' ? `${finalInches}${fracStr}"` : `0"`;
-      }
+      if (feet > 0) return finalInches > 0 || fracStr !== '' ? `${feet}' ${finalInches}${fracStr}"` : `${feet}'`;
+      return finalInches > 0 || fracStr !== '' ? `${finalInches}${fracStr}"` : `0"`;
     }
 
     function parseImperialToInches(str) {
@@ -568,9 +563,8 @@
       str = str.trim();
       const spaceSplit = str.split(/\s+/);
       if (spaceSplit.length === 2) {
-        const whole = parseFloat(spaceSplit[0]) || 0;
         const fracParts = spaceSplit[1].split('/');
-        return whole + (fracParts.length === 2 ? parseFloat(fracParts[0]) / parseFloat(fracParts[1]) : 0);
+        return (parseFloat(spaceSplit[0]) || 0) + (fracParts.length === 2 ? parseFloat(fracParts[0]) / parseFloat(fracParts[1]) : 0);
       } else if (str.includes('/')) {
         const fracParts = str.split('/');
         return fracParts.length === 2 ? parseFloat(fracParts[0]) / parseFloat(fracParts[1]) : 0;
@@ -582,20 +576,15 @@
       const file = e.target.files[0];
       if (!file) return;
       const preview = document.getElementById('imagePreview');
-      preview.src = URL.createObjectURL(file);
-      preview.style.display = 'block';
-      const status = document.getElementById('ocrStatus');
-      status.innerText = "Analyzing print for dimensions & legends...";
-
+      preview.src = URL.createObjectURL(file); preview.style.display = 'block';
+      document.getElementById('ocrStatus').innerText = "Analyzing print...";
       try {
         const worker = await Tesseract.createWorker('eng');
         const ret = await worker.recognize(file);
         document.getElementById('rawOcrText').value = ret.data.text;
-        status.innerText = "OCR Complete. Review text and Auto-Fill.";
+        document.getElementById('ocrStatus').innerText = "OCR Complete.";
         await worker.terminate();
-      } catch (err) {
-        status.innerText = "Error reading image.";
-      }
+      } catch (err) { document.getElementById('ocrStatus').innerText = "Error reading image."; }
     }
 
     function parseOcrTextToInputs() {
@@ -604,21 +593,16 @@
 
       const slabMatch = text.match(/SLAB/i);
       if (slabMatch) {
-          document.getElementById('itemType').value = 'slab';
-          toggleItemFields();
+          document.getElementById('itemType').value = 'slab'; toggleItemFields();
           document.getElementById('itemMark').value = "SLAB-" + Math.floor(Math.random() * 90 + 10);
       }
 
       const ledgeMatch = text.match(/(?:BRICK|SUPPORT)\s*LEDGE/i);
       if (ledgeMatch && !slabMatch) {
-        document.getElementById('itemType').value = 'ledge';
-        toggleItemFields();
-        if (/SUPPORT/i.test(ledgeMatch[0])) document.getElementById('ledgeStyle').value = 'support';
-        else document.getElementById('ledgeStyle').value = 'brick';
-        
+        document.getElementById('itemType').value = 'ledge'; toggleItemFields();
+        document.getElementById('ledgeStyle').value = /SUPPORT/i.test(ledgeMatch[0]) ? 'support' : 'brick';
         const lenMatch = text.match(/(\d+[\s\-_]+(?:\d+\/\d+)?)\s*["']/);
         if (lenMatch) document.getElementById('ledgeLength').value = parseImperialToInches(lenMatch[1]);
-        
         document.getElementById('itemMark').value = "LDG-" + Math.floor(Math.random() * 90 + 10);
         return;
       }
@@ -629,8 +613,7 @@
             document.getElementById('slabWidth').value = parseImperialToInches(openingMatch[1]);
             document.getElementById('slabLength').value = parseImperialToInches(openingMatch[2]);
         } else {
-            document.getElementById('itemType').value = /door/i.test(text) ? 'door' : 'window';
-            toggleItemFields();
+            document.getElementById('itemType').value = /door/i.test(text) ? 'door' : 'window'; toggleItemFields();
             document.getElementById('openWidth').value = parseImperialToInches(openingMatch[1]);
             document.getElementById('openHeight').value = parseImperialToInches(openingMatch[2]);
             document.getElementById('itemMark').value = (/door/i.test(text) ? "D-" : "W-") + Math.floor(Math.random() * 90 + 10);
@@ -638,117 +621,121 @@
       }
     }
 
-    function addItem() {
+    function addItem(editingId = null) {
       const type = document.getElementById('itemType').value;
       const mark = document.getElementById('itemMark').value || 'ITEM';
       const qty = parseInt(document.getElementById('itemQty').value) || 1;
+      const groupId = editingId || Date.now(); 
+
+      // Original input parameters for the edit function
+      let origParams = { type, mark, qty };
 
       if (type === 'window' || type === 'door') {
         const w = parseFloat(document.getElementById('openWidth').value);
         const h = parseFloat(document.getElementById('openHeight').value);
         const rip = parseFloat(document.getElementById('openRipWidth').value) || 10.38;
-        if (isNaN(w) || isNaN(h)) return alert('Please enter valid width and height.');
+        if (isNaN(w) || isNaN(h)) return alert('Enter valid width and height.');
+        origParams = { ...origParams, w, h, rip, core: document.getElementById('openCoreType').value };
 
-        cutItems.push({
-          id: Date.now() + 1, mark: mark, qty: qty, materialCat: '2x12',
-          material: '2x12 Ripped (10.38")', tagClass: 'tag-2x12', width: rip,
-          cutLength: w + HEADER_CAP_OVERAGE, desc: `Top Header (ID + 3.25" Cap)`
-        });
-
+        cutItems.push({ id: groupId, mark, qty, materialCat: '2x12', material: '2x12 Ripped (10.38")', tagClass: 'tag-2x12', width: rip, cutLength: w + HEADER_CAP_OVERAGE, desc: `Top Header (ID + 3.25" Cap)`, origParams });
         if (type === 'window') {
-          cutItems.push({
-            id: Date.now() + 2, mark: mark, qty: qty, materialCat: '2x12',
-            material: '2x12 Ripped (10.38")', tagClass: 'tag-2x12', width: rip,
-            cutLength: w + HEADER_CAP_OVERAGE, desc: `Bottom Sill (ID + 3.25" Cap)`
-          });
+          cutItems.push({ id: groupId+1, mark, qty, materialCat: '2x12', material: '2x12 Ripped (10.38")', tagClass: 'tag-2x12', width: rip, cutLength: w + HEADER_CAP_OVERAGE, desc: `Bottom Sill (ID + 3.25" Cap)`, origParams });
         } else {
-          cutItems.push({
-            id: Date.now() + 2, mark: mark, qty: qty, materialCat: '2x12',
-            material: '2x12 Ripped (10.38")', tagClass: 'tag-door', width: rip,
-            cutLength: w + DOOR_SILL_OVERAGE, desc: `Bottom Spreader (ID + 1/8" Field Cut)`
-          });
+          cutItems.push({ id: groupId+1, mark, qty, materialCat: '2x12', material: '2x12 Ripped (10.38")', tagClass: 'tag-door', width: rip, cutLength: w + DOOR_SILL_OVERAGE, desc: `Bottom Spreader (ID + 1/8" Field Cut)`, origParams });
         }
-
-        cutItems.push({
-          id: Date.now() + 3, mark: mark, qty: 2 * qty, materialCat: '2x12',
-          material: '2x12 Ripped (10.38")', tagClass: 'tag-2x12', width: rip,
-          cutLength: h, desc: `Side Jambs (Inside Height)`
-        });
+        cutItems.push({ id: groupId+2, mark, qty: 2 * qty, materialCat: '2x12', material: '2x12 Ripped (10.38")', tagClass: 'tag-2x12', width: rip, cutLength: h, desc: `Side Jambs (Inside Height)`, origParams });
 
       } else if (type === 'slab') {
         const len = parseFloat(document.getElementById('slabLength').value);
         const wid = parseFloat(document.getElementById('slabWidth').value);
         const mat = document.getElementById('slabMaterial').value;
         const sections = parseInt(document.getElementById('slabSections').value) || 1;
+        if (isNaN(len) || isNaN(wid)) return alert('Enter valid length and width.');
+        origParams = { ...origParams, len, wid, mat, sections };
 
-        if (isNaN(len) || isNaN(wid)) return alert('Enter valid slab length and width.');
+        let matDesc = '2x6 Untreated'; let wNom = 5.5; let tag = 'tag-2x6';
+        if(mat === '2x4_U') { matDesc = '2x4 Untreated'; wNom = 3.5; tag = 'tag-2x4'; }
+        else if(mat === '2x6_T8') { matDesc = '2x6 Treated'; }
+        else if(mat === '2x6_T10') { matDesc = '2x6 Treated'; }
 
-        const matCat = mat === '2x4' ? '2x4_U' : '2x6_U';
-        const matDesc = mat === '2x4' ? '2x4 Untreated' : '2x6 Untreated';
-        const wNom = mat === '2x4' ? 3.5 : 5.5;
-
-        cutItems.push({
-          id: Date.now() + 1, mark: mark, qty: 2 * qty, materialCat: matCat,
-          material: matDesc, tagClass: mat === '2x4' ? 'tag-2x4' : 'tag-2x6', width: wNom,
-          cutLength: len + OUTSIDE_FORM_CAP, desc: `Slab Long Rails (Outside Cap)`
-        });
-        cutItems.push({
-          id: Date.now() + 2, mark: mark, qty: 2 * qty, materialCat: matCat,
-          material: matDesc, tagClass: mat === '2x4' ? 'tag-2x4' : 'tag-2x6', width: wNom,
-          cutLength: wid, desc: `Slab Short Rails (Inside Width)`
-        });
-
+        cutItems.push({ id: groupId, mark, qty: 2 * qty, materialCat: mat, material: matDesc, tagClass: tag, width: wNom, cutLength: len + OUTSIDE_FORM_CAP, desc: `Slab Long Rails`, origParams });
+        cutItems.push({ id: groupId+1, mark, qty: 2 * qty, materialCat: mat, material: matDesc, tagClass: tag, width: wNom, cutLength: wid, desc: `Slab Short Rails`, origParams });
         if (sections > 1) {
-            cutItems.push({
-                id: Date.now() + 3, mark: mark, qty: (sections - 1) * qty, materialCat: matCat,
-                material: matDesc, tagClass: mat === '2x4' ? 'tag-2x4' : 'tag-2x6', width: wNom,
-                cutLength: wid, desc: `Slab Section Dividers (Inside Width)`
-            });
+            cutItems.push({ id: groupId+2, mark, qty: (sections - 1) * qty, materialCat: mat, material: matDesc, tagClass: tag, width: wNom, cutLength: wid, desc: `Slab Section Dividers`, origParams });
         }
 
       } else if (type === 'ledge') {
         const len = parseFloat(document.getElementById('ledgeLength').value);
         const style = document.getElementById('ledgeStyle').value;
-        if (isNaN(len)) return alert('Enter a valid ledge length.');
-        
-        const styleName = style === 'brick' ? 'Brick Ledge (4")' : 'Support Ledge (5 3/4")';
+        const mat = document.getElementById('ledgeMaterial').value;
+        if (isNaN(len)) return alert('Enter valid length.');
+        origParams = { ...origParams, len, style, mat };
 
-        cutItems.push({
-          id: Date.now(), mark: mark, qty: qty, materialCat: '2x6_U',
-          material: '2x6 Untreated', tagClass: 'tag-2x6', width: 5.5,
-          cutLength: len, desc: `${styleName} Blockout`
-        });
+        let matDesc = '2x6 Untreated';
+        if(mat === '2x6_T8' || mat === '2x6_T10') matDesc = '2x6 Treated';
+
+        cutItems.push({ id: groupId, mark, qty, materialCat: mat, material: matDesc, tagClass: 'tag-2x6', width: 5.5, cutLength: len, desc: `${style === 'brick' ? 'Brick' : 'Support'} Ledge`, origParams });
 
       } else if (type === 'divider') {
         const panelLength = parseFloat(document.getElementById('divPanelHeight').value) || 0;
         const sideA = parseFloat(document.getElementById('divFormDepth').value) || 10.5;
         let sideB = parseFloat(document.getElementById('divSlopeOffset').value) || 0;
         const preset = document.getElementById('divAnglePreset').value;
-
         if (preset === '45' && sideB === 0) sideB = sideA;
+        origParams = { ...origParams, panelLength, sideA, sideB, preset };
 
         let betaAngle = 0; let sideC = sideA;
         if (sideB > 0) {
           betaAngle = (Math.atan(sideB / sideA) * (180 / Math.PI)).toFixed(1);
           sideC = Math.sqrt((sideA * sideA) + (sideB * sideB));
         }
-
-        cutItems.push({
-          id: Date.now(), mark: mark, qty: qty, materialCat: 'Ply',
-          material: `0.75" Plywood`, tagClass: 'tag-plywood', width: sideC,
-          cutLength: panelLength > 0 ? panelLength : sideC,
-          desc: `Sloped Divider (Bevel: ${betaAngle}°, Form Bed: ${sideA}")`
-        });
+        cutItems.push({ id: groupId, mark, qty, materialCat: 'Ply', material: `0.75" Plywood`, tagClass: 'tag-plywood', width: sideC, cutLength: panelLength > 0 ? panelLength : sideC, desc: `Sloped Divider (Bevel: ${betaAngle}°)`, origParams });
       }
 
-      renderCutList();
-      optimizeStock();
-    }
-
-    function removeItem(id) {
-      cutItems = cutItems.filter(item => item.id !== id);
       renderCutList(); optimizeStock();
     }
+
+    function editItem(groupId) {
+      const item = cutItems.find(i => i.id === groupId || i.id === groupId+1 || i.id === groupId+2);
+      if(!item || !item.origParams) return;
+      
+      const p = item.origParams;
+      document.getElementById('itemType').value = p.type;
+      toggleItemFields();
+      document.getElementById('itemMark').value = p.mark;
+      document.getElementById('itemQty').value = p.qty;
+
+      if(p.type === 'window' || p.type === 'door') {
+          document.getElementById('openWidth').value = p.w;
+          document.getElementById('openHeight').value = p.h;
+          document.getElementById('openRipWidth').value = p.rip;
+          document.getElementById('openCoreType').value = p.core;
+      } else if(p.type === 'slab') {
+          document.getElementById('slabLength').value = p.len;
+          document.getElementById('slabWidth').value = p.wid;
+          document.getElementById('slabMaterial').value = p.mat;
+          document.getElementById('slabSections').value = p.sections;
+      } else if(p.type === 'ledge') {
+          document.getElementById('ledgeLength').value = p.len;
+          document.getElementById('ledgeStyle').value = p.style;
+          document.getElementById('ledgeMaterial').value = p.mat;
+      } else if(p.type === 'divider') {
+          document.getElementById('divPanelHeight').value = p.panelLength;
+          document.getElementById('divFormDepth').value = p.sideA;
+          document.getElementById('divSlopeOffset').value = p.sideB;
+          document.getElementById('divAnglePreset').value = p.preset;
+      }
+      
+      // Remove original grouping to avoid duplicates when they hit Add
+      cutItems = cutItems.filter(i => i.origParams !== p);
+      renderCutList(); optimizeStock();
+    }
+
+    function removeItem(origParamsObj) {
+      cutItems = cutItems.filter(item => item.origParams !== origParamsObj);
+      renderCutList(); optimizeStock();
+    }
+    
     function clearList() {
       if (confirm('Clear entire cut sheet?')) { cutItems = []; renderCutList(); optimizeStock(); }
     }
@@ -756,30 +743,48 @@
     function renderCutList() {
       const tbody = document.getElementById('cutListBody');
       tbody.innerHTML = '';
-      cutItems.forEach(item => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><strong>${item.mark}</strong></td>
-          <td><strong>${item.qty}</strong></td>
-          <td><span class="tag ${item.tagClass}">${item.material}</span></td>
-          <td>${toFraction(item.width)}</td>
-          <td><strong>${toFraction(item.cutLength)}</strong></td>
-          <td>${item.desc}</td>
-          <td class="no-print"><button class="btn btn-danger" style="padding: 4px 8px;" onclick="removeItem(${item.id})">X</button></td>
-        `;
-        tbody.appendChild(tr);
+      let totalPieces = 0; let linearInches = 0;
+
+      // Group by origParams to display logically
+      const uniqueGroups = new Set();
+      cutItems.forEach(i => uniqueGroups.add(i.origParams));
+
+      uniqueGroups.forEach(params => {
+          const groupItems = cutItems.filter(i => i.origParams === params);
+          groupItems.forEach((item, index) => {
+              totalPieces += item.qty;
+              if (item.materialCat === '2x12') linearInches += (item.cutLength * item.qty);
+              
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                <td><strong>${item.mark}</strong></td>
+                <td><strong>${item.qty}</strong></td>
+                <td><span class="tag ${item.tagClass}">${item.material}</span></td>
+                <td>${toFraction(item.width)}</td>
+                <td><strong>${toFraction(item.cutLength)}</strong></td>
+                <td>${item.desc}</td>
+                <td class="no-print">
+                  ${index === 0 ? `<button class="btn btn-warning" style="padding: 4px 8px; margin-right:4px;" onclick="editItem(${item.id})">Edit</button><button class="btn btn-danger" style="padding: 4px 8px;" onclick="removeItem(cutItems.find(i=>i.id===${item.id}).origParams)">X</button>` : ''}
+                </td>
+              `;
+              tbody.appendChild(tr);
+          });
       });
+
+      const totalLbrFeet = (linearInches / 12).toFixed(1);
+      const totalBdFeet = ((linearInches * 1.5 * 11.25) / 144).toFixed(1); // Actual bd ft of 2x12 stock before rip
+      document.getElementById('summaryStats').innerText = `Total Pieces: ${totalPieces} | 2x12 Linear Feet: ${totalLbrFeet} LF (~${totalBdFeet} BF)`;
     }
 
     function optimizeStock() {
       const optContainer = document.getElementById('optimizerOutput');
       if (cutItems.length === 0) {
-        optContainer.innerHTML = `<p style="color: var(--text-muted);">Add items above to calculate lumber sticks and plywood yield.</p>`;
-        lastCalculatedDemand = { count8: 0, count10: 0, count12: 0, count2x4: 0, count2x6: 0, sheetsPly: 0 };
+        optContainer.innerHTML = `<p style="color: var(--text-muted);">Add items above to calculate lumber sticks and check against local inventory.</p>`;
+        lastCalculatedDemand = { count8: 0, count10: 0, count12: 0, count2x4: 0, count2x6U: 0, count2x6T8: 0, count2x6T10: 0, sheetsPly: 0 };
         return;
       }
 
-      let groups = { '2x12': [], '2x4_U': [], '2x6_U': [] };
+      let groups = { '2x12': [], '2x4_U': [], '2x6_U': [], '2x6_T8': [], '2x6_T10': [] };
       let plyArea = 0;
 
       cutItems.forEach(item => {
@@ -832,7 +837,9 @@
 
       let sticks2x12 = packSticks(groups['2x12'], [96.0, 120.0, 144.0]);
       let sticks2x4 = packSticks(groups['2x4_U'], [96.0]); 
-      let sticks2x6 = packSticks(groups['2x6_U'], [168.0]); 
+      let sticks2x6U = packSticks(groups['2x6_U'], [168.0]); // 14' untreated
+      let sticks2x6T8 = packSticks(groups['2x6_T8'], [96.0]); // 8' treated
+      let sticks2x6T10 = packSticks(groups['2x6_T10'], [120.0]); // 10' treated
 
       let count8 = 0, count10 = 0, count12 = 0;
       sticks2x12.forEach(s => {
@@ -841,26 +848,46 @@
         else count12++;
       });
       let count2x4 = sticks2x4.length;
-      let count2x6 = sticks2x6.length;
+      let count2x6U = sticks2x6U.length;
+      let count2x6T8 = sticks2x6T8.length;
+      let count2x6T10 = sticks2x6T10.length;
 
-      const plywoodSheetsNeeded = plyArea > 0 ? Math.ceil((plyArea * 1.15) / (48 * 96)) : 0;
-      lastCalculatedDemand = { count8, count10, count12, count2x4, count2x6, sheetsPly: plywoodSheetsNeeded };
+      const sheetsPly = plyArea > 0 ? Math.ceil((plyArea * 1.15) / (48 * 96)) : 0;
+      lastCalculatedDemand = { count8, count10, count12, count2x4, count2x6U, count2x6T8, count2x6T10, sheetsPly };
+
+      // Shortage Check Logic
+      let inv8 = parseInt(localStorage.getItem('shop_inv_8')) || 0;
+      let inv10 = parseInt(localStorage.getItem('shop_inv_10')) || 0;
+      let inv12 = parseInt(localStorage.getItem('shop_inv_12')) || 0;
+      let invPly = parseInt(localStorage.getItem('shop_inv_ply')) || 0;
+      let inv2x4U = parseInt(localStorage.getItem('shop_inv_2x4x8_u')) || 0;
+      let inv2x6U = parseInt(localStorage.getItem('shop_inv_2x6x14_u')) || 0;
+      let inv2x6T8 = parseInt(localStorage.getItem('shop_inv_2x6x8_t')) || 0;
+      let inv2x6T10 = parseInt(localStorage.getItem('shop_inv_2x6x10_t')) || 0;
+
+      function renderLine(qty, label, inventoryCount) {
+         if (qty === 0) return '';
+         let warn = (qty > inventoryCount) ? `<span class="shortage-warn">⚠️ Shortage: Need ${qty}, have ${inventoryCount} in stock.</span>` : `<span style="color:var(--success); font-size:0.8rem; margin-left:8px;">(In Stock)</span>`;
+         return `• <strong>${qty}x</strong> ${label} ${warn}<br>`;
+      }
 
       let html = `<div style="margin-bottom: 12px;">
-        <span style="font-size: 1rem; color: var(--accent); font-weight: bold;">Lumber Pull Required:</span>
+        <span style="font-size: 1rem; color: var(--accent); font-weight: bold;">Lumber Pull Required vs Inventory:</span>
         <div style="margin-top: 4px; line-height: 1.6;">
-          ${count8 > 0 ? `• <strong>${count8}x</strong> 8' 2x12<br>` : ''}
-          ${count10 > 0 ? `• <strong>${count10}x</strong> 10' 2x12<br>` : ''}
-          ${count12 > 0 ? `• <strong>${count12}x</strong> 12' 2x12<br>` : ''}
-          ${count2x4 > 0 ? `• <strong>${count2x4}x</strong> 8' 2x4 Untreated<br>` : ''}
-          ${count2x6 > 0 ? `• <strong>${count2x6}x</strong> 14' 2x6 Untreated<br>` : ''}
-          ${plywoodSheetsNeeded > 0 ? `• <strong>${plywoodSheetsNeeded}x</strong> 4'x8' 3/4" Plywood` : ''}
+          ${renderLine(count8, "8' 2x12", inv8)}
+          ${renderLine(count10, "10' 2x12", inv10)}
+          ${renderLine(count12, "12' 2x12", inv12)}
+          ${renderLine(count2x4, "8' 2x4 Untreated", inv2x4U)}
+          ${renderLine(count2x6U, "14' 2x6 Untreated", inv2x6U)}
+          ${renderLine(count2x6T8, "8' 2x6 Treated", inv2x6T8)}
+          ${renderLine(count2x6T10, "10' 2x6 Treated", inv2x6T10)}
+          ${renderLine(sheetsPly, "4'x8' 3/4\" Plywood", invPly)}
         </div>
       </div>`;
 
       function renderStickHTML(title, stickArray) {
         if (stickArray.length === 0) return '';
-        let out = `<strong style="color: var(--accent); display:block; margin: 10px 0 6px 0;">${title} Cutting Layout (1/8" Kerf):</strong>`;
+        let out = `<strong style="color: var(--accent); display:block; margin: 10px 0 6px 0;">${title} Layout:</strong>`;
         stickArray.forEach((s, idx) => {
           let name = (s.stockLength / 12) + "' Stock";
           const cutListStr = s.cuts.map(c => `<strong>${toFraction(c.length)}</strong> [${c.mark}]`).join(' + ');
@@ -873,7 +900,9 @@
 
       html += renderStickHTML('2x12 (Box Openings)', sticks2x12);
       html += renderStickHTML('2x4 Untreated (Slab Forms)', sticks2x4);
-      html += renderStickHTML('2x6 Untreated (Ledges/Forms)', sticks2x6);
+      html += renderStickHTML('2x6 Untreated (Ledges/Forms)', sticks2x6U);
+      html += renderStickHTML('2x6 Treated (8\')', sticks2x6T8);
+      html += renderStickHTML('2x6 Treated (10\')', sticks2x6T10);
       optContainer.innerHTML = html;
     }
 
@@ -883,13 +912,7 @@
       let aggregatedCuts = {};
       cutItems.forEach(item => {
           let key = `${item.materialCat}_${item.cutLength}`;
-          if (!aggregatedCuts[key]) {
-              aggregatedCuts[key] = {
-                  materialDesc: item.material,
-                  length: item.cutLength,
-                  qty: 0
-              };
-          }
+          if (!aggregatedCuts[key]) aggregatedCuts[key] = { materialDesc: item.material, length: item.cutLength, qty: 0 };
           aggregatedCuts[key].qty += item.qty;
       });
 
@@ -914,7 +937,9 @@
       if (lastCalculatedDemand.count10 > 0) shareText += `• ${lastCalculatedDemand.count10}x 10' 2x12\n`;
       if (lastCalculatedDemand.count12 > 0) shareText += `• ${lastCalculatedDemand.count12}x 12' 2x12\n`;
       if (lastCalculatedDemand.count2x4 > 0) shareText += `• ${lastCalculatedDemand.count2x4}x 2x4x8 (U)\n`;
-      if (lastCalculatedDemand.count2x6 > 0) shareText += `• ${lastCalculatedDemand.count2x6}x 2x6x14 (U)\n`;
+      if (lastCalculatedDemand.count2x6U > 0) shareText += `• ${lastCalculatedDemand.count2x6U}x 2x6x14 (U)\n`;
+      if (lastCalculatedDemand.count2x6T8 > 0) shareText += `• ${lastCalculatedDemand.count2x6T8}x 2x6x8 (T)\n`;
+      if (lastCalculatedDemand.count2x6T10 > 0) shareText += `• ${lastCalculatedDemand.count2x6T10}x 2x6x10 (T)\n`;
       if (lastCalculatedDemand.sheetsPly > 0) shareText += `• ${lastCalculatedDemand.sheetsPly}x 4'x8' 3/4" Plywood\n`;
 
       if (navigator.share) {
@@ -924,7 +949,7 @@
     }
 
     function fallbackCopyToClipboard(text) {
-      navigator.clipboard.writeText(text).then(() => alert('Copied to clipboard! You can paste it directly into Messenger or SMS.')).catch(() => alert('Error copying.'));
+      navigator.clipboard.writeText(text).then(() => alert('Copied to clipboard! You can paste it directly into Messenger.')).catch(() => alert('Error copying.'));
     }
 
     function exportCSV() {
