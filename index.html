@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Precast Carpentry Shop Cut List & Material Optimizer</title>
+  <title>Precast Carpentry Shop Engine</title>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     :root {
@@ -83,7 +83,7 @@
   <div class="header no-print">
     <div>
       <h1>Precast Carpentry Shop Engine</h1>
-      <span style="color: var(--text-muted); font-size: 0.85rem;">2x12 Openings | Ledges & Slabs | Stock & Job Tracking</span>
+      <span style="color: var(--text-muted); font-size: 0.85rem;">2x12 Openings | Slabs & Ledges (2x6/2x4) | Stock Tracking</span>
     </div>
     <div style="display: flex; gap: 8px;">
       <button class="btn btn-info" onclick="shareOrExport()">Share Cut Sheet</button>
@@ -92,9 +92,7 @@
   </div>
 
   <div class="grid">
-    <!-- Left Column: Inputs, Scanning, Inventory, Jobs -->
     <div>
-      <!-- Job Management -->
       <div class="card no-print">
         <h2>Job Management</h2>
         <div class="row">
@@ -120,7 +118,6 @@
         </div>
       </div>
 
-      <!-- Live Shop Lumber Inventory (Stored on Phone) -->
       <div class="card no-print">
         <h2>Local Shop Lumber Inventory (Rack Stock)</h2>
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px;">
@@ -183,7 +180,6 @@
         </div>
       </div>
 
-      <!-- OCR & Camera Module -->
       <div class="card no-print">
         <h2>Job Print Scanner / Photo Input</h2>
         <div class="ocr-box" onclick="document.getElementById('fileInput').click()">
@@ -199,7 +195,6 @@
         <button class="btn btn-secondary btn-block" onclick="parseOcrTextToInputs()">Auto-Fill From Scanned Text</button>
       </div>
 
-      <!-- Manual / Override Entry Form -->
       <div class="card no-print">
         <h2>Add Shop Build Item</h2>
         
@@ -210,7 +205,7 @@
               <option value="window">Box Window Opening (2x12)</option>
               <option value="door">Box Door Opening (2x12, Field Cut-Out)</option>
               <option value="ledge">Ledge / Blockout (2x6 Untreated)</option>
-              <option value="slab">Slab / Lid Form (2x4 or 2x6)</option>
+              <option value="slab" selected>Slab / Lid Form (2x6 Default)</option>
               <option value="divider">Custom Divider Bulkhead (0.75" Plywood)</option>
             </select>
           </div>
@@ -220,8 +215,7 @@
           </div>
         </div>
 
-        <!-- Box Opening Inputs (Window & Door) -->
-        <div id="openingFields" class="input-section">
+        <div id="openingFields" class="input-section" style="display: none;">
           <div class="row">
             <div class="form-group">
               <label>Inside Width (Inches)</label>
@@ -247,8 +241,7 @@
           </div>
         </div>
 
-        <!-- Slab / Lid Form Inputs -->
-        <div id="slabFields" class="input-section" style="display: none;">
+        <div id="slabFields" class="input-section">
           <div class="row">
             <div class="form-group">
               <label>Inside Length (Inches)</label>
@@ -259,16 +252,21 @@
               <input type="number" step="0.0625" id="slabWidth" placeholder="Short side">
             </div>
           </div>
-          <div class="form-group">
-            <label>Form Material (Untreated)</label>
-            <select id="slabMaterial">
-              <option value="2x4">2x4x8 Untreated</option>
-              <option value="2x6">2x6x14 Untreated</option>
-            </select>
+          <div class="row">
+            <div class="form-group">
+              <label>Form Material (Untreated)</label>
+              <select id="slabMaterial">
+                <option value="2x6">2x6x14 Untreated (5.5" Tall)</option>
+                <option value="2x4">2x4x8 Untreated (3.5" Tall)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Split Sections (Dividers)</label>
+              <input type="number" step="1" id="slabSections" value="1" min="1" placeholder="e.g., 2 for split pour">
+            </div>
           </div>
         </div>
 
-        <!-- Ledge Blockout Inputs -->
         <div id="ledgeFields" class="input-section" style="display: none;">
           <div class="row">
             <div class="form-group">
@@ -285,7 +283,6 @@
           </div>
         </div>
 
-        <!-- Custom Divider Inputs -->
         <div id="dividerFields" class="input-section" style="display: none;">
           <div class="row">
             <div class="form-group">
@@ -323,9 +320,7 @@
       </div>
     </div>
 
-    <!-- Right Column: Live Master Cut Sheet & Stock Optimization -->
     <div>
-      <!-- Saw Cut List -->
       <div class="card print-target">
         <h2>Saw Master Cut List</h2>
         <div id="summaryStats" style="margin-bottom: 8px; color: var(--text-muted); font-size: 0.85rem;"></div>
@@ -354,7 +349,6 @@
         </div>
       </div>
 
-      <!-- Stock Material Optimizer Module -->
       <div class="card print-target">
         <h2>Stock Material Pull & Cutting Optimization</h2>
         <div id="optimizerOutput" style="font-size: 0.9rem; line-height: 1.5;">
@@ -370,7 +364,7 @@
 
     const HEADER_CAP_OVERAGE = 3.25; 
     const DOOR_SILL_OVERAGE = 0.125; 
-    const OUTSIDE_FORM_CAP = 3.0; // 2x actual thickness for capping outer slab forms
+    const OUTSIDE_FORM_CAP = 3.0; 
     const SAW_KERF = 0.125; 
     const SCRAP_THRESHOLD = 24.0; 
 
@@ -569,8 +563,15 @@
       const text = document.getElementById('rawOcrText').value;
       if (!text) return;
 
+      const slabMatch = text.match(/SLAB/i);
+      if (slabMatch) {
+          document.getElementById('itemType').value = 'slab';
+          toggleItemFields();
+          document.getElementById('itemMark').value = "SLAB-" + Math.floor(Math.random() * 90 + 10);
+      }
+
       const ledgeMatch = text.match(/(?:BRICK|SUPPORT)\s*LEDGE/i);
-      if (ledgeMatch) {
+      if (ledgeMatch && !slabMatch) {
         document.getElementById('itemType').value = 'ledge';
         toggleItemFields();
         if (/SUPPORT/i.test(ledgeMatch[0])) document.getElementById('ledgeStyle').value = 'support';
@@ -585,11 +586,17 @@
 
       const openingMatch = text.match(/(\d+[\d\s\/\.'"-]*)\s*[xX]\s*(\d+[\d\s\/\.'"-]*)/);
       if (openingMatch) {
-        document.getElementById('itemType').value = /door/i.test(text) ? 'door' : 'window';
-        toggleItemFields();
-        document.getElementById('openWidth').value = parseImperialToInches(openingMatch[1]);
-        document.getElementById('openHeight').value = parseImperialToInches(openingMatch[2]);
-        document.getElementById('itemMark').value = (/door/i.test(text) ? "D-" : "W-") + Math.floor(Math.random() * 90 + 10);
+        // If slab is found, maybe those dims are the slab dims
+        if (slabMatch) {
+            document.getElementById('slabWidth').value = parseImperialToInches(openingMatch[1]);
+            document.getElementById('slabLength').value = parseImperialToInches(openingMatch[2]);
+        } else {
+            document.getElementById('itemType').value = /door/i.test(text) ? 'door' : 'window';
+            toggleItemFields();
+            document.getElementById('openWidth').value = parseImperialToInches(openingMatch[1]);
+            document.getElementById('openHeight').value = parseImperialToInches(openingMatch[2]);
+            document.getElementById('itemMark').value = (/door/i.test(text) ? "D-" : "W-") + Math.floor(Math.random() * 90 + 10);
+        }
       }
     }
 
@@ -634,6 +641,8 @@
         const len = parseFloat(document.getElementById('slabLength').value);
         const wid = parseFloat(document.getElementById('slabWidth').value);
         const mat = document.getElementById('slabMaterial').value;
+        const sections = parseInt(document.getElementById('slabSections').value) || 1;
+
         if (isNaN(len) || isNaN(wid)) return alert('Enter valid slab length and width.');
 
         const matCat = mat === '2x4' ? '2x4_U' : '2x6_U';
@@ -650,6 +659,14 @@
           material: matDesc, tagClass: mat === '2x4' ? 'tag-2x4' : 'tag-2x6', width: wNom,
           cutLength: wid, desc: `Slab Short Rails (Inside Width)`
         });
+
+        if (sections > 1) {
+            cutItems.push({
+                id: Date.now() + 3, mark: mark, qty: (sections - 1) * qty, materialCat: matCat,
+                material: matDesc, tagClass: mat === '2x4' ? 'tag-2x4' : 'tag-2x6', width: wNom,
+                cutLength: wid, desc: `Slab Section Dividers (Inside Width)`
+            });
+        }
 
       } else if (type === 'ledge') {
         const len = parseFloat(document.getElementById('ledgeLength').value);
@@ -824,14 +841,18 @@
 
     async function shareOrExport() {
       if (cutItems.length === 0) return alert('No cuts to share.');
-      let shareText = `📋 PRECAST SHOP MASTER CUT LIST\nGenerated: ${new Date().toLocaleDateString()}\n\n--- MATERIAL PULL ---\n`;
-      if (lastCalculatedDemand.count8 > 0) shareText += `• ${lastCalculatedDemand.count8}x 8' 2x12\n`;
-      if (lastCalculatedDemand.count10 > 0) shareText += `• ${lastCalculatedDemand.count10}x 10' 2x12\n`;
-      if (lastCalculatedDemand.count12 > 0) shareText += `• ${lastCalculatedDemand.count12}x 12' 2x12\n`;
-      if (lastCalculatedDemand.count2x4 > 0) shareText += `• ${lastCalculatedDemand.count2x4}x 2x4x8 (U)\n`;
-      if (lastCalculatedDemand.count2x6 > 0) shareText += `• ${lastCalculatedDemand.count2x6}x 2x6x14 (U)\n`;
-      if (lastCalculatedDemand.sheetsPly > 0) shareText += `• ${lastCalculatedDemand.sheetsPly}x 4'x8' 3/4" Plywood\n`;
       
+      let shareText = `📋 PRECAST SHOP MASTER CUT LIST\nGenerated: ${new Date().toLocaleDateString()}\n\n`;
+      
+      shareText += `--- CUT PIECE SUMMARY ---\n`;
+      cutItems.forEach(i => {
+        shareText += `• [${i.mark}] ${i.qty}x : ${i.material} | ${toFraction(i.cutLength)}" Long (${i.desc})\n`;
+      });
+      
+      shareText += `\n--- STOCK PULL & CUT LAYOUT ---\n`;
+      const optimizerText = document.getElementById('optimizerOutput').innerText;
+      shareText += optimizerText;
+
       if (navigator.share) {
         try { await navigator.share({ title: 'Precast Shop Cut List', text: shareText }); } 
         catch (err) { if (err.name !== 'AbortError') fallbackCopyToClipboard(shareText); }
@@ -839,7 +860,7 @@
     }
 
     function fallbackCopyToClipboard(text) {
-      navigator.clipboard.writeText(text).then(() => alert('Copied to clipboard!')).catch(() => alert('Error copying.'));
+      navigator.clipboard.writeText(text).then(() => alert('Copied to clipboard! You can paste it directly into Messenger or SMS.')).catch(() => alert('Error copying.'));
     }
 
     function exportCSV() {
