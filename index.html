@@ -514,6 +514,33 @@
       return whole > 0 ? `${whole} ${num}/${den}"` : `${num}/${den}"`;
     }
 
+    function toFeetAndInches(val) {
+      if (!val || isNaN(val)) return '0"';
+      const feet = Math.floor(val / 12);
+      const inchesDec = val % 12;
+      const wholeInches = Math.floor(inchesDec);
+      const remainder = inchesDec - wholeInches;
+      const sixteenths = Math.round(remainder * 16);
+
+      let finalInches = wholeInches;
+      let fracStr = '';
+
+      if (sixteenths === 16) {
+        finalInches += 1;
+      } else if (sixteenths > 0) {
+        let num = sixteenths;
+        let den = 16;
+        while (num % 2 === 0 && den % 2 === 0) { num /= 2; den /= 2; }
+        fracStr = ` ${num}/${den}`;
+      }
+
+      if (feet > 0) {
+        return finalInches > 0 || fracStr !== '' ? `${feet}' ${finalInches}${fracStr}"` : `${feet}'`;
+      } else {
+        return finalInches > 0 || fracStr !== '' ? `${finalInches}${fracStr}"` : `0"`;
+      }
+    }
+
     function parseImperialToInches(str) {
       if (!str) return null;
       str = str.trim().replace(/["']/g, '');
@@ -842,16 +869,46 @@
     async function shareOrExport() {
       if (cutItems.length === 0) return alert('No cuts to share.');
       
+      // 1. Group all cuts by material and length
+      let aggregatedCuts = {};
+      cutItems.forEach(item => {
+          // Group key e.g., "2x4_U_45.25"
+          let key = `${item.materialCat}_${item.cutLength}`;
+          if (!aggregatedCuts[key]) {
+              aggregatedCuts[key] = {
+                  materialDesc: item.material,
+                  length: item.cutLength,
+                  qty: 0
+              };
+          }
+          aggregatedCuts[key].qty += item.qty;
+      });
+
+      // 2. Sort into materials array
+      let materialsObj = {};
+      Object.values(aggregatedCuts).forEach(cut => {
+          if (!materialsObj[cut.materialDesc]) materialsObj[cut.materialDesc] = [];
+          materialsObj[cut.materialDesc].push(cut);
+      });
+
       let shareText = `📋 PRECAST SHOP MASTER CUT LIST\nGenerated: ${new Date().toLocaleDateString()}\n\n`;
       
-      shareText += `--- CUT PIECE SUMMARY ---\n`;
-      cutItems.forEach(i => {
-        shareText += `• [${i.mark}] ${i.qty}x : ${i.material} | ${toFraction(i.cutLength)}" Long (${i.desc})\n`;
-      });
-      
-      shareText += `\n--- STOCK PULL & CUT LAYOUT ---\n`;
-      const optimizerText = document.getElementById('optimizerOutput').innerText;
-      shareText += optimizerText;
+      // The Simplified Cut List per the user request: "2x4 - 3' 9" - 2 pieces"
+      shareText += `--- CUT LIST ---\n`;
+      for (let mat in materialsObj) {
+          materialsObj[mat].sort((a,b) => b.length - a.length); // Sort longest to shortest
+          materialsObj[mat].forEach(cut => {
+               shareText += `• ${mat} - ${toFeetAndInches(cut.length)} - ${cut.qty} pieces\n`;
+          });
+      }
+
+      shareText += `\n--- MATERIAL PULL ---\n`;
+      if (lastCalculatedDemand.count8 > 0) shareText += `• ${lastCalculatedDemand.count8}x 8' 2x12\n`;
+      if (lastCalculatedDemand.count10 > 0) shareText += `• ${lastCalculatedDemand.count10}x 10' 2x12\n`;
+      if (lastCalculatedDemand.count12 > 0) shareText += `• ${lastCalculatedDemand.count12}x 12' 2x12\n`;
+      if (lastCalculatedDemand.count2x4 > 0) shareText += `• ${lastCalculatedDemand.count2x4}x 2x4x8 (U)\n`;
+      if (lastCalculatedDemand.count2x6 > 0) shareText += `• ${lastCalculatedDemand.count2x6}x 2x6x14 (U)\n`;
+      if (lastCalculatedDemand.sheetsPly > 0) shareText += `• ${lastCalculatedDemand.sheetsPly}x 4'x8' 3/4" Plywood\n`;
 
       if (navigator.share) {
         try { await navigator.share({ title: 'Precast Shop Cut List', text: shareText }); } 
