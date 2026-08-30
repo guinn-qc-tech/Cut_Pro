@@ -60,6 +60,7 @@
     .status-bar { font-size: 0.85rem; color: var(--accent); margin-top: 4px; }
     .nesting-card { background: #13171d; border: 1px solid #2d3748; padding: 10px; border-radius: 4px; margin-bottom: 8px; font-size: 0.85rem; }
     .nesting-card strong { color: var(--accent); }
+    .sheet-rip { margin-top: 4px; padding: 6px 8px; border-left: 2px solid var(--success); background: #1a1e24; margin-bottom: 2px; }
     .inventory-badge { background: #11141a; border: 1px solid var(--border); border-radius: 4px; padding: 8px; text-align: center; }
     .inventory-badge span { display: block; font-size: 0.70rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .inventory-badge strong { font-size: 1.1rem; color: var(--accent); }
@@ -323,7 +324,7 @@
                 <th>Mark</th>
                 <th>Qty</th>
                 <th>Material</th>
-                <th>Board Width</th>
+                <th>Max Rip Width</th>
                 <th>Cut Length</th>
                 <th>Notes</th>
                 <th class="no-print">Action</th>
@@ -357,6 +358,8 @@
     const OUTSIDE_FORM_CAP = 3.0; 
     const SAW_KERF = 0.125; 
     const SCRAP_THRESHOLD = 24.0; 
+    const PLYWOOD_WIDTH = 48.0;
+    const PLYWOOD_LENGTH = 96.0;
 
     // ---- Data Management (JSON Export/Import) ----
     function exportDataBackup() {
@@ -627,7 +630,6 @@
       const qty = parseInt(document.getElementById('itemQty').value) || 1;
       const groupId = editingId || Date.now(); 
 
-      // Original input parameters for the edit function
       let origParams = { type, mark, qty };
 
       if (type === 'window' || type === 'door') {
@@ -726,7 +728,6 @@
           document.getElementById('divAnglePreset').value = p.preset;
       }
       
-      // Remove original grouping to avoid duplicates when they hit Add
       cutItems = cutItems.filter(i => i.origParams !== p);
       renderCutList(); optimizeStock();
     }
@@ -745,7 +746,6 @@
       tbody.innerHTML = '';
       let totalPieces = 0; let linearInches = 0;
 
-      // Group by origParams to display logically
       const uniqueGroups = new Set();
       cutItems.forEach(i => uniqueGroups.add(i.origParams));
 
@@ -772,7 +772,7 @@
       });
 
       const totalLbrFeet = (linearInches / 12).toFixed(1);
-      const totalBdFeet = ((linearInches * 1.5 * 11.25) / 144).toFixed(1); // Actual bd ft of 2x12 stock before rip
+      const totalBdFeet = ((linearInches * 1.5 * 11.25) / 144).toFixed(1);
       document.getElementById('summaryStats').innerText = `Total Pieces: ${totalPieces} | 2x12 Linear Feet: ${totalLbrFeet} LF (~${totalBdFeet} BF)`;
     }
 
@@ -785,7 +785,7 @@
       }
 
       let groups = { '2x12': [], '2x4_U': [], '2x6_U': [], '2x6_T8': [], '2x6_T10': [] };
-      let plyArea = 0;
+      let plyPieces = []; // Will store { mark, width, length }
 
       cutItems.forEach(item => {
         if (groups[item.materialCat]) {
@@ -793,10 +793,21 @@
             groups[item.materialCat].push({ mark: item.mark, length: item.cutLength, desc: item.desc });
           }
         } else if (item.materialCat === 'Ply') {
-          plyArea += (item.width * item.cutLength * item.qty);
+          for (let i = 0; i < item.qty; i++) {
+            // Pre-split lengths > 96" for the rip-strip calculation
+            let remainingLen = item.cutLength;
+            while(remainingLen > PLYWOOD_LENGTH) {
+              plyPieces.push({ mark: item.mark, width: item.width, length: PLYWOOD_LENGTH });
+              remainingLen -= PLYWOOD_LENGTH;
+            }
+            if(remainingLen > 0) {
+              plyPieces.push({ mark: item.mark, width: item.width, length: remainingLen });
+            }
+          }
         }
       });
 
+      // ---- 1D Packer for Lumber ----
       function packSticks(pieces, allowedLengths) {
         pieces.sort((a, b) => b.length - a.length);
         let unassigned = [...pieces];
@@ -819,8 +830,8 @@
           }
 
           let chosenStock = maxLen;
-          allowedLengths.sort((a,b)=>a-b);
-          for (let L of allowedLengths) {
+          let sortedLengths = [...allowedLengths].sort((a,b)=>a-b);
+          for (let L of sortedLengths) {
             if (currentUsedLength <= L) { chosenStock = L; break; }
           }
           
@@ -837,9 +848,9 @@
 
       let sticks2x12 = packSticks(groups['2x12'], [96.0, 120.0, 144.0]);
       let sticks2x4 = packSticks(groups['2x4_U'], [96.0]); 
-      let sticks2x6U = packSticks(groups['2x6_U'], [168.0]); // 14' untreated
-      let sticks2x6T8 = packSticks(groups['2x6_T8'], [96.0]); // 8' treated
-      let sticks2x6T10 = packSticks(groups['2x6_T10'], [120.0]); // 10' treated
+      let sticks2x6U = packSticks(groups['2x6_U'], [168.0]); 
+      let sticks2x6T8 = packSticks(groups['2x6_T8'], [96.0]); 
+      let sticks2x6T10 = packSticks(groups['2x6_T10'], [120.0]); 
 
       let count8 = 0, count10 = 0, count12 = 0;
       sticks2x12.forEach(s => {
@@ -847,15 +858,74 @@
         else if (s.stockLength === 120.0) count10++;
         else count12++;
       });
-      let count2x4 = sticks2x4.length;
-      let count2x6U = sticks2x6U.length;
-      let count2x6T8 = sticks2x6T8.length;
-      let count2x6T10 = sticks2x6T10.length;
+      
+      // ---- 2D Rip-Strip Packer for Plywood ----
+      let plyStrips = []; 
+      let plyGroups = {};
+      plyPieces.forEach(p => {
+        let wKey = p.width.toFixed(4);
+        if (!plyGroups[wKey]) plyGroups[wKey] = [];
+        plyGroups[wKey].push(p);
+      });
 
-      const sheetsPly = plyArea > 0 ? Math.ceil((plyArea * 1.15) / (48 * 96)) : 0;
-      lastCalculatedDemand = { count8, count10, count12, count2x4, count2x6U, count2x6T8, count2x6T10, sheetsPly };
+      // 1. Pack pieces into 96" long strips (by exact width)
+      for (let wKey in plyGroups) {
+        let pieces = plyGroups[wKey];
+        pieces.sort((a, b) => b.length - a.length);
+        let unassigned = [...pieces];
+        while (unassigned.length > 0) {
+          let currentPiece = unassigned.shift();
+          let currentCuts = [currentPiece];
+          let currentUsedLength = currentPiece.length;
 
-      // Shortage Check Logic
+          let i = 0;
+          while (i < unassigned.length) {
+            let candidate = unassigned[i];
+            if (currentUsedLength + SAW_KERF + candidate.length <= PLYWOOD_LENGTH) {
+              currentCuts.push(candidate);
+              currentUsedLength += (SAW_KERF + candidate.length);
+              unassigned.splice(i, 1);
+            } else { i++; }
+          }
+          plyStrips.push({
+            width: parseFloat(wKey),
+            usedLength: currentUsedLength,
+            remainingLength: PLYWOOD_LENGTH - currentUsedLength,
+            cuts: currentCuts
+          });
+        }
+      }
+
+      // 2. Pack Strips into 48" wide sheets
+      plyStrips.sort((a, b) => b.width - a.width);
+      let plySheets = [];
+      let unassignedStrips = [...plyStrips];
+
+      while(unassignedStrips.length > 0) {
+        let currentStrip = unassignedStrips.shift();
+        let currentSheetStrips = [currentStrip];
+        let currentUsedWidth = currentStrip.width;
+
+        let i = 0;
+        while (i < unassignedStrips.length) {
+          let candidateStrip = unassignedStrips[i];
+          if (currentUsedWidth + SAW_KERF + candidateStrip.width <= PLYWOOD_WIDTH) {
+            currentSheetStrips.push(candidateStrip);
+            currentUsedWidth += (SAW_KERF + candidateStrip.width);
+            unassignedStrips.splice(i, 1);
+          } else { i++; }
+        }
+        plySheets.push({
+          usedWidth: currentUsedWidth,
+          remainingWidth: PLYWOOD_WIDTH - currentUsedWidth,
+          strips: currentSheetStrips
+        });
+      }
+
+      const sheetsPly = plySheets.length;
+      lastCalculatedDemand = { count8, count10, count12, count2x4: sticks2x4.length, count2x6U: sticks2x6U.length, count2x6T8: sticks2x6T8.length, count2x6T10: sticks2x6T10.length, sheetsPly };
+
+      // ---- Shortage UI Render ----
       let inv8 = parseInt(localStorage.getItem('shop_inv_8')) || 0;
       let inv10 = parseInt(localStorage.getItem('shop_inv_10')) || 0;
       let inv12 = parseInt(localStorage.getItem('shop_inv_12')) || 0;
@@ -877,10 +947,10 @@
           ${renderLine(count8, "8' 2x12", inv8)}
           ${renderLine(count10, "10' 2x12", inv10)}
           ${renderLine(count12, "12' 2x12", inv12)}
-          ${renderLine(count2x4, "8' 2x4 Untreated", inv2x4U)}
-          ${renderLine(count2x6U, "14' 2x6 Untreated", inv2x6U)}
-          ${renderLine(count2x6T8, "8' 2x6 Treated", inv2x6T8)}
-          ${renderLine(count2x6T10, "10' 2x6 Treated", inv2x6T10)}
+          ${renderLine(sticks2x4.length, "8' 2x4 Untreated", inv2x4U)}
+          ${renderLine(sticks2x6U.length, "14' 2x6 Untreated", inv2x6U)}
+          ${renderLine(sticks2x6T8.length, "8' 2x6 Treated", inv2x6T8)}
+          ${renderLine(sticks2x6T10.length, "10' 2x6 Treated", inv2x6T10)}
           ${renderLine(sheetsPly, "4'x8' 3/4\" Plywood", invPly)}
         </div>
       </div>`;
@@ -898,11 +968,29 @@
         return out;
       }
 
+      function renderPlywoodHTML() {
+        if (plySheets.length === 0) return '';
+        let out = `<strong style="color: var(--accent); display:block; margin: 10px 0 6px 0;">3/4" Plywood Sheets (Rip & Strip Layout):</strong>`;
+        plySheets.forEach((sheet, idx) => {
+          let stripsHTML = '';
+          sheet.strips.forEach(strip => {
+            const cutListStr = strip.cuts.map(c => `<strong>${toFraction(c.length)}</strong> [${c.mark}]`).join(' + ');
+            stripsHTML += `<div class="sheet-rip">Rip ${toFraction(strip.width)}" Strip: ${cutListStr} <span style="float: right; color: var(--text-muted); font-size: 0.8rem;">Len Drop: ${toFraction(strip.remainingLength)}"</span></div>`;
+          });
+          out += `<div class="nesting-card">
+                    <strong>Sheet #${idx + 1}:</strong> <span style="float: right; color: var(--danger); font-size: 0.85rem; font-weight: bold;">Width Drop: ${toFraction(sheet.remainingWidth)}" (Scrap)</span>
+                    <div style="margin-top: 6px;">${stripsHTML}</div>
+                  </div>`;
+        });
+        return out;
+      }
+
       html += renderStickHTML('2x12 (Box Openings)', sticks2x12);
       html += renderStickHTML('2x4 Untreated (Slab Forms)', sticks2x4);
       html += renderStickHTML('2x6 Untreated (Ledges/Forms)', sticks2x6U);
       html += renderStickHTML('2x6 Treated (8\')', sticks2x6T8);
       html += renderStickHTML('2x6 Treated (10\')', sticks2x6T10);
+      html += renderPlywoodHTML();
       optContainer.innerHTML = html;
     }
 
