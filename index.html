@@ -34,6 +34,8 @@
       padding: 16px; 
       font-size: 14px; 
     }
+
+    .div-input { width: 55px; padding: 4px; background: #0f1115; border: 1px solid var(--border); color: #fff; border-radius: 4px; text-align: center; font-size: 0.9rem; }
     
     /* Header & Tabs */
     .header { 
@@ -533,32 +535,46 @@
   <!-- ========================================== -->
   <div id="tab-dividers" class="tab-content">
     <div class="card no-print">
-      <h2>Add / Register New Divider Size</h2>
+      <h2>Manage Divider Sizes</h2>
       <div class="row">
-        <div class="form-group"><label>Profile Style</label><select id="divStyle"><option>45°</option><option>22.5°</option><option>Butt</option><option>Ship Lap</option></select></div>
-        <div class="form-group"><label>Length (Inches)</label><input type="number" step="0.125" id="divSizeL" placeholder="e.g. 48.5"></div>
-        <div class="form-group"><label style="color:transparent;">.</label><button class="btn btn-block" onclick="addDividerSize()">Register Size</button></div>
+        <div class="form-group">
+          <label>Profile Style</label>
+          <select id="divStyle"><option>45°</option><option>22.5°</option><option>Butt</option><option>Ship Lap</option></select>
+        </div>
+        <div class="form-group">
+          <label>Length (Feet)</label>
+          <input type="number" id="divSizeF" placeholder="e.g. 8" min="0">
+        </div>
+        <div class="form-group">
+          <label>Length (Inches)</label>
+          <input type="number" step="0.125" id="divSizeI" placeholder="e.g. 5.5" min="0">
+        </div>
       </div>
+      <div class="row">
+        <button class="btn btn-success" onclick="addDividerSize()" style="flex: 1;">Register Size</button>
+        <button class="btn btn-danger" onclick="deleteDividerSize()" style="flex: 1;">Delete Size</button>
+      </div>
+      <p style="font-size:0.8rem; color:var(--text-muted); margin-top:6px;">To remove a row, select the exact style and length above, then press Delete Size.</p>
     </div>
 
     <div class="grid">
-      <div class="card print-target"><h3>45° Dividers</h3><table class="div-table" data-style="45°"><thead><tr><th>Size</th><th>Good</th><th>Svc</th><th>Marked</th><th class="no-print">Adj</th></tr></thead><tbody></tbody></table></div>
-      <div class="card print-target"><h3>22.5° Dividers</h3><table class="div-table" data-style="22.5°"><thead><tr><th>Size</th><th>Good</th><th>Svc</th><th>Marked</th><th class="no-print">Adj</th></tr></thead><tbody></tbody></table></div>
-      <div class="card print-target"><h3>Butt Dividers</h3><table class="div-table" data-style="Butt"><thead><tr><th>Size</th><th>Good</th><th>Svc</th><th>Marked</th><th class="no-print">Adj</th></tr></thead><tbody></tbody></table></div>
-      <div class="card print-target"><h3>Ship Lap</h3><table class="div-table" data-style="Ship Lap"><thead><tr><th>Size</th><th>Good</th><th>Svc</th><th>Marked</th><th class="no-print">Adj</th></tr></thead><tbody></tbody></table></div>
+      <div class="card print-target"><h3>45° Dividers</h3><table class="div-table" data-style="45°"><thead><tr><th>Size</th><th>Good</th><th>Svc</th><th>Marked</th></tr></thead><tbody></tbody></table></div>
+      <div class="card print-target"><h3>22.5° Dividers</h3><table class="div-table" data-style="22.5°"><thead><tr><th>Size</th><th>Good</th><th>Svc</th><th>Marked</th></tr></thead><tbody></tbody></table></div>
+      <div class="card print-target"><h3>Butt Dividers</h3><table class="div-table" data-style="Butt"><thead><tr><th>Size</th><th>Good</th><th>Svc</th><th>Marked</th></tr></thead><tbody></tbody></table></div>
+      <div class="card print-target"><h3>Ship Lap</h3><table class="div-table" data-style="Ship Lap"><thead><tr><th>Size</th><th>Good</th><th>Svc</th><th>Marked</th></tr></thead><tbody></tbody></table></div>
     </div>
 
     <div class="card no-print">
       <h2>Combination Calculator</h2>
       <div class="row">
-        <div class="form-group"><label>Target Panel Length (In)</label><input type="number" id="comboTarget"></div>
-        <div class="form-group"><label>Style</label><select id="comboStyle"><option>45°</option><option>Butt</option></select></div>
-        <button class="btn" onclick="calcCombo()">Find Combo</button>
+        <div class="form-group"><label>Target Panel Length (Feet)</label><input type="number" id="comboTargetF" placeholder="e.g. 8" min="0"></div>
+        <div class="form-group"><label>Target Panel Length (Inches)</label><input type="number" step="0.125" id="comboTargetI" placeholder="e.g. 0" min="0"></div>
+        <div class="form-group"><label>Style</label><select id="comboStyle"><option>45°</option><option>Butt</option><option>22.5°</option><option>Ship Lap</option></select></div>
       </div>
-      <div id="comboResult" style="color:var(--success); margin-top:8px; font-weight:bold;"></div>
+      <button class="btn btn-block btn-info" onclick="calcCombo()">Find Stack Combination</button>
+      <div id="comboResult" style="margin-top:12px; font-weight:bold; font-size: 1.05rem; line-height: 1.5;"></div>
     </div>
   </div>
-
   <!-- ========================================== -->
   <!-- TAB 3: REBAR & CUSTOM STEEL                -->
   <!-- ========================================== -->
@@ -1222,35 +1238,123 @@
 
     // ---- Tab 2: Dividers ----
     function addDividerSize() {
-      const s=document.getElementById('divStyle').value, l=parseFloat(document.getElementById('divSizeL').value);
-      if(!l) return;
-      divData.push({id:Date.now(), style:s, len:l, g:0, svc:0, mk:0});
+      const s = document.getElementById('divStyle').value;
+      const f = parseFloat(document.getElementById('divSizeF').value) || 0;
+      const i = parseFloat(document.getElementById('divSizeI').value) || 0;
+      const l = (f * 12) + i;
+      
+      if(l <= 0) return alert("Enter a valid length.");
+      if(divData.find(x => x.style === s && x.len === l)) return alert("Size already exists for this style.");
+      
+      divData.push({id: Date.now(), style: s, len: l, g: 0, svc: 0, mk: 0});
       saveDiv();
+      document.getElementById('divSizeF').value = '';
+      document.getElementById('divSizeI').value = '';
     }
-    function saveDiv() { localStorage.setItem('divData', JSON.stringify(divData)); renderDividers(); }
+
+    function deleteDividerSize() {
+      const s = document.getElementById('divStyle').value;
+      const f = parseFloat(document.getElementById('divSizeF').value) || 0;
+      const i = parseFloat(document.getElementById('divSizeI').value) || 0;
+      const l = (f * 12) + i;
+      
+      if(l <= 0) return alert("Enter the exact length of the size you want to delete.");
+      
+      const initialLength = divData.length;
+      divData = divData.filter(x => !(x.style === s && x.len === l));
+      
+      if(divData.length === initialLength) {
+        alert("Size not found. Make sure the style and length match the table exactly.");
+      } else {
+        saveDiv();
+        document.getElementById('divSizeF').value = '';
+        document.getElementById('divSizeI').value = '';
+      }
+    }
+
+    function saveDiv() { 
+      localStorage.setItem('divData', JSON.stringify(divData)); 
+      renderDividers(); 
+    }
+
     function renderDividers() {
       ['45°','22.5°','Butt','Ship Lap'].forEach(style => {
         let tb = document.querySelector(`.div-table[data-style="${style}"] tbody`);
-        tb.innerHTML='';
-        divData.filter(d=>d.style===style).sort((a,b)=>a.len-b.len).forEach(d => {
-          tb.innerHTML += `<tr><td>${d.len}"</td><td>${d.g}</td><td>${d.svc}</td><td>${d.mk}</td>
-          <td class="no-print">
-            <button class="btn btn-sm btn-success" onclick="adjDiv(${d.id},'g',1)">G</button>
-            <button class="btn btn-sm btn-warning" onclick="adjDiv(${d.id},'svc',1)">S</button>
-            <button class="btn btn-sm btn-info" onclick="adjDiv(${d.id},'mk',1)">M</button>
-            <button class="btn btn-sm btn-danger" onclick="divData=divData.filter(x=>x.id!==${d.id}); saveDiv();">X</button>
-          </td></tr>`;
+        if(!tb) return;
+        tb.innerHTML = '';
+        divData.filter(d => d.style === style).sort((a,b) => a.len - b.len).forEach(d => {
+          tb.innerHTML += `<tr>
+            <td><strong>${toFeetAndInches(d.len)}</strong></td>
+            <td><input type="number" class="div-input" value="${d.g}" min="0" onchange="updateDivCount(${d.id}, 'g', this.value)"></td>
+            <td><input type="number" class="div-input" value="${d.svc}" min="0" onchange="updateDivCount(${d.id}, 'svc', this.value)"></td>
+            <td><input type="number" class="div-input" value="${d.mk}" min="0" onchange="updateDivCount(${d.id}, 'mk', this.value)"></td>
+          </tr>`;
         });
       });
     }
-    function adjDiv(id, prop, val) { let d=divData.find(x=>x.id===id); if(d){ d[prop]+=val; saveDiv(); } }
+
+    function updateDivCount(id, prop, val) { 
+      let d = divData.find(x => x.id === id); 
+      if(d) { 
+        d[prop] = parseInt(val) || 0; 
+        localStorage.setItem('divData', JSON.stringify(divData)); 
+      } 
+    }
     
     function calcCombo() {
-      let t = parseFloat(document.getElementById('comboTarget').value);
-      if(!t) return;
-      document.getElementById('comboResult').innerText = `Calculation: Need ${t}" total. Review available inventory to stack.`;
-    }
+      const f = parseFloat(document.getElementById('comboTargetF').value) || 0;
+      const i = parseFloat(document.getElementById('comboTargetI').value) || 0;
+      const target = (f * 12) + i;
+      const style = document.getElementById('comboStyle').value;
+      const resEl = document.getElementById('comboResult');
+      
+      if (target <= 0) {
+        resEl.innerHTML = `<span style="color:var(--danger)">Please enter a target length.</span>`;
+        return;
+      }
 
+      let available = divData.filter(d => d.style === style && d.g > 0).map(d => ({len: d.len, qty: d.g}));
+      
+      if (available.length === 0) {
+        resEl.innerHTML = `<span style="color:var(--danger)">No "Good" inventory available for ${style} dividers.</span>`;
+        return;
+      }
+
+      available.sort((a, b) => b.len - a.len);
+      let bestCombo = null;
+      
+      function findStack(currentTarget, currentCombo, inventory) {
+        if (currentTarget === 0) {
+          bestCombo = [...currentCombo];
+          return true;
+        }
+        if (currentTarget < 0) return false; 
+
+        for (let idx = 0; idx < inventory.length; idx++) {
+          if (inventory[idx].qty > 0 && inventory[idx].len <= currentTarget) {
+            inventory[idx].qty--;
+            currentCombo.push(inventory[idx].len);
+            
+            if (findStack(currentTarget - inventory[idx].len, currentCombo, inventory)) return true;
+            
+            currentCombo.pop();
+            inventory[idx].qty++;
+          }
+        }
+        return false;
+      }
+
+      let success = findStack(target, [], available);
+
+      if (success && bestCombo) {
+        let counts = {};
+        bestCombo.forEach(len => { counts[len] = (counts[len] || 0) + 1; });
+        let comboStr = Object.entries(counts).map(([len, qty]) => `${qty}x <strong>${toFeetAndInches(parseFloat(len))}</strong>`).join(' + ');
+        resEl.innerHTML = `<span style="color:var(--success)">✅ Exact Stack Found:<br>${comboStr}</span>`;
+      } else {
+        resEl.innerHTML = `<span style="color:var(--warning)">⚠️ No exact match possible with current "Good" inventory.</span>`;
+      }
+    }
     // ---- Tab 3: Rebar Scrap & Custom Steel ----
     function addRebarScrap() {
       let sz=document.getElementById('scrapSize').value, l=parseFloat(document.getElementById('scrapLen').value), q=parseInt(document.getElementById('scrapQty').value)||1;
