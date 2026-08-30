@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Precast Carpentry Shop Engine</title>
+  <title>Precast Shop Operations Engine</title>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     :root {
@@ -18,62 +18,283 @@
       --danger: #ef4444;
       --info: #3b82f6;
       --warning: #facc15;
+      --tab-bg: #262c36;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-    body { background: var(--bg-dark); color: var(--text); padding: 16px; font-size: 14px; }
-    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 12px; margin-bottom: 16px; }
-    .header h1 { font-size: 1.3rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
-    .grid { display: grid; grid-template-columns: 1.1fr 1.9fr; gap: 16px; }
-    @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
-    .card { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 6px; padding: 16px; margin-bottom: 16px; }
-    .card h2 { font-size: 1.05rem; margin-bottom: 12px; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 6px; display: flex; justify-content: space-between; }
-    .form-group { margin-bottom: 12px; }
-    label { display: block; margin-bottom: 4px; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
-    input, select, textarea { width: 100%; background: #0f1115; border: 1px solid var(--border); color: #fff; padding: 8px 10px; border-radius: 4px; font-size: 0.95rem; }
-    input:focus, select:focus, textarea:focus { border-color: var(--accent); outline: none; }
-    .row { display: flex; gap: 10px; }
-    .row .form-group { flex: 1; }
-    .btn { background: var(--accent); color: #000; font-weight: bold; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-transform: uppercase; font-size: 0.85rem; }
+
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+    }
+
+    body { 
+      background: var(--bg-dark); 
+      color: var(--text); 
+      padding: 16px; 
+      font-size: 14px; 
+    }
+    
+    /* Header & Tabs */
+    .header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      border-bottom: 2px solid var(--border); 
+      padding-bottom: 12px; 
+      margin-bottom: 16px; 
+    }
+
+    .header h1 { 
+      font-size: 1.3rem; 
+      color: var(--accent); 
+      text-transform: uppercase; 
+      letter-spacing: 1px; 
+    }
+
+    .tab-container { 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 4px; 
+      margin-bottom: 16px; 
+    }
+
+    .tab-btn { 
+      background: var(--tab-bg); 
+      color: var(--text-muted); 
+      border: 1px solid var(--border); 
+      padding: 10px 16px; 
+      border-radius: 4px 4px 0 0; 
+      cursor: pointer; 
+      font-weight: bold; 
+      font-size: 0.85rem; 
+      text-transform: uppercase; 
+      border-bottom: none; 
+    }
+
+    .tab-btn.active { 
+      background: var(--panel-bg); 
+      color: var(--accent); 
+      border-top: 3px solid var(--accent); 
+    }
+
+    .tab-content { 
+      display: none; 
+    }
+
+    .tab-content.active { 
+      display: block; 
+    }
+
+    .grid { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      gap: 16px; 
+    }
+
+    .grid-3 { 
+      display: grid; 
+      grid-template-columns: 1fr 1fr 1fr; 
+      gap: 16px; 
+    }
+
+    @media (max-width: 1000px) { 
+      .grid, .grid-3 { grid-template-columns: 1fr; } 
+    }
+    
+    /* Cards & Forms */
+    .card { 
+      background: var(--panel-bg); 
+      border: 1px solid var(--border); 
+      border-radius: 6px; 
+      padding: 16px; 
+      margin-bottom: 16px; 
+    }
+
+    .card h2 { 
+      font-size: 1.05rem; 
+      margin-bottom: 12px; 
+      color: var(--accent); 
+      border-bottom: 1px solid var(--border); 
+      padding-bottom: 6px; 
+    }
+
+    .card h3 { 
+      font-size: 0.95rem; 
+      margin-top: 12px; 
+      margin-bottom: 8px; 
+      color: var(--info); 
+    }
+
+    .form-group { 
+      margin-bottom: 12px; 
+    }
+
+    label { 
+      display: block; 
+      margin-bottom: 4px; 
+      font-size: 0.85rem; 
+      color: var(--text-muted); 
+      font-weight: 600; 
+    }
+
+    input, select, textarea { 
+      width: 100%; 
+      background: #0f1115; 
+      border: 1px solid var(--border); 
+      color: #fff; 
+      padding: 8px 10px; 
+      border-radius: 4px; 
+      font-size: 0.95rem; 
+    }
+
+    input:focus, select:focus, textarea:focus { 
+      border-color: var(--accent); 
+      outline: none; 
+    }
+
+    .row { 
+      display: flex; 
+      gap: 10px; 
+    }
+
+    .row .form-group { 
+      flex: 1; 
+    }
+    
+    /* Buttons */
+    .btn { 
+      background: var(--accent); 
+      color: #000; 
+      font-weight: bold; 
+      border: none; 
+      padding: 8px 14px; 
+      border-radius: 4px; 
+      cursor: pointer; 
+      text-transform: uppercase; 
+      font-size: 0.8rem; 
+    }
+
     .btn:hover { background: var(--accent-hover); }
     .btn-secondary { background: #374151; color: #fff; }
-    .btn-secondary:hover { background: #4b5563; }
     .btn-success { background: var(--success); color: #fff; }
     .btn-info { background: var(--info); color: #fff; }
     .btn-danger { background: var(--danger); color: #fff; }
     .btn-warning { background: var(--warning); color: #000; }
     .btn-block { width: 100%; }
-    .ocr-box { border: 2px dashed var(--border); padding: 14px; text-align: center; border-radius: 6px; cursor: pointer; margin-bottom: 12px; }
-    .ocr-box:hover { border-color: var(--accent); }
-    #imagePreview { max-width: 100%; max-height: 180px; object-fit: contain; margin-top: 10px; display: none; }
-    .table-container { overflow-x: auto; margin-top: 10px; }
-    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
-    th { background: #262c36; color: var(--accent); padding: 8px 10px; border: 1px solid var(--border); text-transform: uppercase; font-size: 0.72rem; }
-    td { padding: 8px 10px; border: 1px solid var(--border); }
-    tr:nth-child(even) { background: #171b21; }
-    .tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
-    .tag-2x12 { background: var(--accent); color: #000; }
-    .tag-plywood { background: var(--success); color: #fff; }
-    .tag-door { background: #d97706; color: #fff; }
+    .btn-sm { padding: 4px 8px; font-size: 0.75rem; }
+    
+    /* Tables & Badges */
+    .table-container { 
+      overflow-x: auto; 
+      margin-top: 10px; 
+    }
+
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      text-align: left; 
+      font-size: 0.85rem; 
+    }
+
+    th { 
+      background: #262c36; 
+      color: var(--accent); 
+      padding: 8px; 
+      border: 1px solid var(--border); 
+      text-transform: uppercase; 
+      font-size: 0.75rem; 
+    }
+
+    td { 
+      padding: 8px; 
+      border: 1px solid var(--border); 
+    }
+
+    tr:nth-child(even) { 
+      background: #171b21; 
+    }
+    
+    .tag { 
+      display: inline-block; 
+      padding: 2px 6px; 
+      border-radius: 4px; 
+      font-size: 0.75rem; 
+      font-weight: bold; 
+      background: var(--accent); 
+      color: #000; 
+    }
+
+    .tag-ply { background: var(--success); color: #fff; }
     .tag-2x4 { background: #64748b; color: #fff; }
     .tag-2x6 { background: #475569; color: #fff; }
-    .print-raw { font-family: monospace; font-size: 0.8rem; height: 75px; resize: vertical; }
-    .status-bar { font-size: 0.85rem; color: var(--accent); margin-top: 4px; }
-    .nesting-card { background: #13171d; border: 1px solid #2d3748; padding: 10px; border-radius: 4px; margin-bottom: 8px; font-size: 0.85rem; }
-    .nesting-card strong { color: var(--accent); }
-    .sheet-rip { margin-top: 4px; padding: 6px 8px; border-left: 2px solid var(--success); background: #1a1e24; margin-bottom: 2px; }
-    .inventory-badge { background: #11141a; border: 1px solid var(--border); border-radius: 4px; padding: 8px; text-align: center; }
-    .inventory-badge span { display: block; font-size: 0.70rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .inventory-badge strong { font-size: 1.1rem; color: var(--accent); }
+    
+    .inventory-badge { 
+      background: #11141a; 
+      border: 1px solid var(--border); 
+      border-radius: 4px; 
+      padding: 8px; 
+      text-align: center; 
+    }
+
+    .inventory-badge span { 
+      display: block; 
+      font-size: 0.75rem; 
+      color: var(--text-muted); 
+    }
+
+    .inventory-badge strong { 
+      font-size: 1.1rem; 
+      color: var(--accent); 
+    }
+    
+    .nesting-card { 
+      background: #13171d; 
+      border: 1px solid #2d3748; 
+      padding: 10px; 
+      border-radius: 4px; 
+      margin-bottom: 8px; 
+      font-size: 0.85rem; 
+    }
+
+    .nesting-card strong { 
+      color: var(--accent); 
+    }
+
+    .sheet-rip { 
+      margin-top: 4px; 
+      padding: 6px 8px; 
+      border-left: 2px solid var(--success); 
+      background: #1a1e24; 
+      margin-bottom: 2px; 
+    }
+
     .scrap-tag { color: var(--danger); font-size: 0.8rem; font-weight: bold; }
     .reusable-tag { color: var(--success); font-size: 0.8rem; font-weight: bold; }
     .shortage-warn { color: var(--danger); font-weight: bold; font-size: 0.85rem; display: block; margin-top: 4px; }
+    
+    .ocr-box { 
+      border: 2px dashed var(--border); 
+      padding: 14px; 
+      text-align: center; 
+      border-radius: 6px; 
+      cursor: pointer; 
+      margin-bottom: 12px; 
+      background: #13171d; 
+    }
+
+    .ocr-box:hover { border-color: var(--accent); }
+    #imagePreview, #prodImagePreview { max-width: 100%; max-height: 180px; object-fit: contain; margin-top: 10px; display: none; }
+    .print-raw { font-family: monospace; font-size: 0.8rem; height: 75px; resize: vertical; }
+
     @media print {
       body { background: #fff; color: #000; padding: 0; }
-      .no-print, .btn, .card:not(.print-target) { display: none !important; }
-      .grid { display: block; }
-      .card { border: none; padding: 0; margin-bottom: 20px; }
+      .no-print, .btn, .tab-container { display: none !important; }
+      .grid, .grid-3 { display: block; }
+      .card { border: none; padding: 0; margin-bottom: 20px; page-break-inside: avoid; }
       th { background: #eee !important; color: #000 !important; }
       td, th { border: 1px solid #000 !important; }
+      .tab-content { display: block !important; margin-bottom: 30px; } 
     }
   </style>
 </head>
@@ -81,135 +302,132 @@
 
   <div class="header no-print">
     <div>
-      <h1>Precast Shop Layout Engine</h1>
-      <span style="color: var(--text-muted); font-size: 0.85rem;">Intelligent Packing & Inventory Sync</span>
+      <h1>Precast Shop Operations</h1>
+      <span style="color: var(--text-muted); font-size: 0.85rem;">Carpentry | Dividers | Steel | Hardware | Concrete</span>
     </div>
     <div style="display: flex; gap: 8px;">
-      <button class="btn btn-info" onclick="shareOrExport()">Share Cut Sheet</button>
-      <button class="btn btn-secondary" onclick="window.print()">Print</button>
+      <button class="btn btn-secondary" onclick="window.print()">Print Master Report (PDF)</button>
     </div>
   </div>
 
-  <div class="grid">
-    <div>
-      <div class="card no-print">
-        <h2>Job & Data Management</h2>
-        <div class="row">
-          <div class="form-group" style="flex: 2;">
-            <label>Save Current Job As:</label>
-            <input type="text" id="jobNameInput" placeholder="e.g., Loudon Pump Station">
-          </div>
-          <div class="form-group" style="display: flex; align-items: flex-end;">
-            <button class="btn btn-success btn-block" onclick="saveJob()">Save Job</button>
-          </div>
-        </div>
-        <div class="row">
-          <div class="form-group" style="flex: 2;">
-            <label>Load Saved Job:</label>
-            <select id="savedJobsDropdown">
-              <option value="">-- Select a Job --</option>
-            </select>
-          </div>
-          <div class="form-group" style="display: flex; align-items: flex-end; gap: 4px;">
-            <button class="btn btn-secondary" onclick="loadJob()" style="flex: 1;">Load</button>
-            <button class="btn btn-danger" onclick="deleteJob()" style="flex: 1;">Delete</button>
-          </div>
-        </div>
-        <hr style="border: 0; border-top: 1px solid var(--border); margin: 12px 0;">
-        <div class="row">
-          <button class="btn btn-secondary btn-block" onclick="exportDataBackup()">Download Backup (JSON)</button>
-          <button class="btn btn-secondary btn-block" onclick="document.getElementById('importFile').click()">Restore Backup</button>
-          <input type="file" id="importFile" accept=".json" style="display:none" onchange="importDataBackup(event)">
-        </div>
-      </div>
+  <div class="tab-container no-print">
+    <button class="tab-btn" onclick="switchTab('tab-carpentry')">1. Carpentry Engine</button>
+    <button class="tab-btn" onclick="switchTab('tab-dividers')">2. Steel Dividers</button>
+    <button class="tab-btn active" onclick="switchTab('tab-rebar')">3. Rebar & Custom Steel</button>
+    <button class="tab-btn" onclick="switchTab('tab-hardware')">4. Hardware & Embeds</button>
+    <button class="tab-btn" onclick="switchTab('tab-concrete')">5. Concrete Volume</button>
+  </div>
 
-      <div class="card no-print">
-        <h2>Local Shop Lumber Inventory</h2>
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px;">
-          <div class="inventory-badge"><span>8' 2x12</span><strong id="invDisplay8">0</strong></div>
-          <div class="inventory-badge"><span>10' 2x12</span><strong id="invDisplay10">0</strong></div>
-          <div class="inventory-badge"><span>12' 2x12</span><strong id="invDisplay12">0</strong></div>
-          <div class="inventory-badge"><span>3/4" Ply</span><strong id="invDisplayPly">0</strong></div>
-          <div class="inventory-badge"><span>2x4x8 (U)</span><strong id="invDisplay2x4x8U">0</strong></div>
-          <div class="inventory-badge"><span>2x6x8 (T)</span><strong id="invDisplay2x6x8T">0</strong></div>
-          <div class="inventory-badge"><span>2x6x10 (T)</span><strong id="invDisplay2x6x10T">0</strong></div>
-          <div class="inventory-badge"><span>2x6x14 (U)</span><strong id="invDisplay2x6x14U">0</strong></div>
-        </div>
-
-        <div class="row">
-          <div class="form-group">
-            <label>Stock Type</label>
-            <select id="invSelectType">
-              <option value="inv8">8' 2x12 Stick</option>
-              <option value="inv10">10' 2x12 Stick</option>
-              <option value="inv12">12' 2x12 Stick</option>
-              <option value="invPly">4'x8' 3/4" Plywood</option>
-              <option value="inv2x4x8U">2x4x8 Untreated</option>
-              <option value="inv2x6x8T">2x6x8 Treated</option>
-              <option value="inv2x6x10T">2x6x10 Treated</option>
-              <option value="inv2x6x14U">2x6x14 Untreated</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Adjust Count (+/-)</label>
-            <input type="number" id="invCountInput" placeholder="e.g. 10 or -2">
-          </div>
-        </div>
-        <div class="row">
-          <button class="btn btn-secondary btn-block" onclick="updateInventoryDirect()">Update Stock</button>
-          <button class="btn btn-success btn-block" onclick="deductCutListFromInventory()">Deduct List from Stock</button>
-        </div>
-      </div>
-
-      <div class="card no-print">
-        <h2>Job Print Scanner</h2>
-        <div class="ocr-box" onclick="document.getElementById('fileInput').click()">
-          <span>Take Photo / Upload Detail</span>
-          <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none" onchange="handleImageUpload(event)">
-          <img id="imagePreview" alt="Preview" />
-        </div>
-        <div id="ocrStatus" class="status-bar"></div>
-        <div class="form-group" style="margin-top: 8px;">
-          <textarea id="rawOcrText" class="print-raw" placeholder="OCR extracted dimensions appear here..."></textarea>
-        </div>
-        <button class="btn btn-secondary btn-block" onclick="parseOcrTextToInputs()">Auto-Fill From Scanned Text</button>
-      </div>
-
-      <div class="card no-print">
-        <h2>Add Shop Build Item</h2>
-        
-        <div class="row">
-          <div class="form-group">
-            <label>Item Category</label>
-            <select id="itemType" onchange="toggleItemFields()">
-              <option value="window">Box Window Opening (2x12)</option>
-              <option value="door">Box Door Opening (2x12, Field Cut-Out)</option>
-              <option value="ledge">Ledge / Blockout (2x6)</option>
-              <option value="slab" selected>Slab / Lid Form (2x6 Default)</option>
-              <option value="divider">Custom Divider Bulkhead (0.75" Plywood)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Mark / Identifier</label>
-            <input type="text" id="itemMark" placeholder="e.g., W-101, L-1">
-          </div>
-        </div>
-
-        <div id="openingFields" class="input-section" style="display: none;">
+  <!-- ========================================== -->
+  <!-- TAB 1: CARPENTRY ENGINE                    -->
+  <!-- ========================================== -->
+  <div id="tab-carpentry" class="tab-content">
+    <div class="grid">
+      <div>
+        <div class="card no-print">
+          <h2>Job & Data Management</h2>
           <div class="row">
-            <div class="form-group">
-              <label>Inside Width (Inches)</label>
-              <input type="number" step="0.0625" id="openWidth" placeholder="e.g., 36.0">
+            <div class="form-group" style="flex: 2;">
+              <label>Save Current Job As:</label>
+              <input type="text" id="jobNameInput" placeholder="e.g., Project Name">
             </div>
-            <div class="form-group">
-              <label>Inside Height (Inches)</label>
-              <input type="number" step="0.0625" id="openHeight" placeholder="e.g., 60.0">
+            <div class="form-group" style="display: flex; align-items: flex-end;">
+              <button class="btn btn-success btn-block" onclick="saveJob()">Save Job</button>
             </div>
           </div>
           <div class="row">
+            <div class="form-group" style="flex: 2;">
+              <label>Load Saved Job:</label>
+              <select id="savedJobsDropdown">
+                <option value="">-- Select a Job --</option>
+              </select>
+            </div>
+            <div class="form-group" style="display: flex; align-items: flex-end; gap: 4px;">
+              <button class="btn btn-secondary" onclick="loadJob()" style="flex: 1;">Load</button>
+              <button class="btn btn-danger" onclick="deleteJob()" style="flex: 1;">Delete</button>
+            </div>
+          </div>
+          <hr style="border: 0; border-top: 1px solid var(--border); margin: 12px 0;">
+          <div class="row">
+            <button class="btn btn-secondary btn-block" onclick="exportDataBackup()">Download Backup (JSON)</button>
+            <button class="btn btn-secondary btn-block" onclick="document.getElementById('importFile').click()">Restore Backup</button>
+            <input type="file" id="importFile" accept=".json" style="display:none" onchange="importDataBackup(event)">
+          </div>
+        </div>
+
+        <div class="card no-print">
+          <h2>Local Shop Lumber Inventory</h2>
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px;">
+            <div class="inventory-badge"><span>8' 2x12</span><strong id="invDisplay8">0</strong></div>
+            <div class="inventory-badge"><span>10' 2x12</span><strong id="invDisplay10">0</strong></div>
+            <div class="inventory-badge"><span>12' 2x12</span><strong id="invDisplay12">0</strong></div>
+            <div class="inventory-badge"><span>3/4" Ply</span><strong id="invDisplayPly">0</strong></div>
+            <div class="inventory-badge"><span>2x4x8 (U)</span><strong id="invDisplay2x4x8U">0</strong></div>
+            <div class="inventory-badge"><span>2x6x8 (T)</span><strong id="invDisplay2x6x8T">0</strong></div>
+            <div class="inventory-badge"><span>2x6x10 (T)</span><strong id="invDisplay2x6x10T">0</strong></div>
+            <div class="inventory-badge"><span>2x6x14 (U)</span><strong id="invDisplay2x6x14U">0</strong></div>
+          </div>
+          <div class="row">
             <div class="form-group">
-              <label>Ripped Width (Form Depth)</label>
-              <input type="number" step="0.01" id="openRipWidth" value="10.38">
+              <label>Stock Type</label>
+              <select id="invSelectType">
+                <option value="inv8">8' 2x12 Stick</option>
+                <option value="inv10">10' 2x12 Stick</option>
+                <option value="inv12">12' 2x12 Stick</option>
+                <option value="invPly">4'x8' 3/4" Plywood</option>
+                <option value="inv2x4x8U">2x4x8 Untreated</option>
+                <option value="inv2x6x8T">2x6x8 Treated</option>
+                <option value="inv2x6x10T">2x6x10 Treated</option>
+                <option value="inv2x6x14U">2x6x14 Untreated</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Adjust Count (+/-)</label>
+              <input type="number" id="invCountInput" placeholder="e.g. 10 or -2">
+            </div>
+          </div>
+          <div class="row">
+            <button class="btn btn-secondary btn-block" onclick="updateInventoryDirect()">Update Stock</button>
+            <button class="btn btn-success btn-block" onclick="deductCutListFromInventory()">Deduct List from Stock</button>
+          </div>
+        </div>
+
+        <div class="card no-print">
+          <h2>Carpentry Print Scanner</h2>
+          <div class="ocr-box" onclick="document.getElementById('fileInput').click()">
+            <span>Take Photo / Upload Detail</span>
+            <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none" onchange="handleImageUpload(event, 'carpentry')">
+            <img id="imagePreview" alt="Preview" />
+          </div>
+          <div id="ocrStatus" class="status-bar"></div>
+          <div class="form-group" style="margin-top: 8px;">
+            <textarea id="rawOcrText" class="print-raw" placeholder="OCR extracted dimensions appear here..."></textarea>
+          </div>
+          <button class="btn btn-secondary btn-block" onclick="parseOcrTextToInputs()">Auto-Fill From Scanned Text</button>
+        </div>
+
+        <div class="card no-print">
+          <h2>Add Shop Build Item</h2>
+          <div class="row">
+            <div class="form-group">
+              <label>Item Category</label>
+              <select id="itemType" onchange="toggleFormFields()">
+                <option value="window">Box Window Opening (2x12)</option>
+                <option value="door">Box Door Opening (2x12)</option>
+                <option value="ledge">Ledge / Blockout (2x6)</option>
+                <option value="slab" selected>Slab / Lid Form</option>
+                <option value="divider">Plywood Divider</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Mark</label><input type="text" id="itemMark" placeholder="e.g. MK-1"></div>
+          </div>
+
+          <!-- Dynamic Sections -->
+          <div id="f-window" class="f-sec" style="display:none;">
+            <div class="row">
+              <div class="form-group"><label>Width (In)</label><input type="number" step="0.0625" id="openW"></div>
+              <div class="form-group"><label>Height (In)</label><input type="number" step="0.0625" id="openH"></div>
+              <div class="form-group"><label>Depth (In)</label><input type="number" step="0.01" id="openD" value="10.38"></div>
             </div>
             <div class="form-group">
               <label>Core Type</label>
@@ -219,53 +437,38 @@
               </select>
             </div>
           </div>
-        </div>
 
-        <div id="slabFields" class="input-section">
-          <div class="row">
-            <div class="form-group">
-              <label>Inside Length (Inches)</label>
-              <input type="number" step="0.0625" id="slabLength" placeholder="Long side">
+          <div id="f-slab" class="f-sec">
+            <div class="row">
+              <div class="form-group"><label>Inside Length</label><input type="number" step="0.0625" id="slabL"></div>
+              <div class="form-group"><label>Inside Width</label><input type="number" step="0.0625" id="slabW"></div>
+            </div>
+            <div class="row">
+              <div class="form-group">
+                <label>Form Material</label>
+                <select id="slabMat">
+                  <option value="2x6_U">2x6 Untreated</option>
+                  <option value="2x4_U">2x4 Untreated</option>
+                  <option value="2x6_T8">2x6 Treated (8')</option>
+                  <option value="2x6_T10">2x6 Treated (10')</option>
+                </select>
+              </div>
+              <div class="form-group"><label>Sections (Split Pour)</label><input type="number" id="slabSec" value="1" min="1"></div>
             </div>
             <div class="form-group">
-              <label>Inside Width (Inches)</label>
-              <input type="number" step="0.0625" id="slabWidth" placeholder="Short side">
-            </div>
-          </div>
-          <div class="row">
-            <div class="form-group">
-              <label>Form Material (Treated/Untreated)</label>
-              <select id="slabMaterial">
-                <option value="2x6_U">2x6x14 Untreated (5.5")</option>
-                <option value="2x4_U">2x4x8 Untreated (3.5")</option>
-                <option value="2x6_T8">2x6x8 Treated (5.5")</option>
-                <option value="2x6_T10">2x6x10 Treated (5.5")</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Split Sections</label>
-              <input type="number" step="1" id="slabSections" value="1" min="1">
+              <label style="display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="slabFoam" style="width:auto;"> Include 1" Foam Moisture Barrier (4" Solid Lip)
+              </label>
             </div>
           </div>
-        </div>
 
-        <div id="ledgeFields" class="input-section" style="display: none;">
-          <div class="row">
-            <div class="form-group">
-              <label>Ledge Linear Length (Inches)</label>
-              <input type="number" step="0.0625" id="ledgeLength" placeholder="e.g., 77.5">
+          <div id="f-ledge" class="f-sec" style="display:none;">
+            <div class="row">
+              <div class="form-group"><label>Linear Length</label><input type="number" step="0.0625" id="ldgL"></div>
+              <div class="form-group"><label>Type</label><select id="ldgType"><option>Brick (4")</option><option>Support (5.75")</option></select></div>
             </div>
             <div class="form-group">
-              <label>Ledge Type</label>
-              <select id="ledgeStyle">
-                <option value="brick">Brick Ledge (4")</option>
-                <option value="support">Support Ledge (5 3/4")</option>
-              </select>
-            </div>
-          </div>
-          <div class="row">
-            <div class="form-group">
-              <label>Form Material</label>
+              <label>Material</label>
               <select id="ledgeMaterial">
                 <option value="2x6_U">2x6x14 Untreated</option>
                 <option value="2x6_T8">2x6x8 Treated</option>
@@ -273,23 +476,12 @@
               </select>
             </div>
           </div>
-        </div>
 
-        <div id="dividerFields" class="input-section" style="display: none;">
-          <div class="row">
-            <div class="form-group">
-              <label>Panel Length (Inches along Bed)</label>
-              <input type="number" step="0.0625" id="divPanelHeight" placeholder="e.g., 120">
-            </div>
-            <div class="form-group">
-              <label>Form Bed Depth (Side A)</label>
-              <input type="number" step="0.0625" id="divFormDepth" value="10.5">
-            </div>
-          </div>
-          <div class="row">
-            <div class="form-group">
-              <label>Slope Offset / Delta (Side B)</label>
-              <input type="number" step="0.0625" id="divSlopeOffset" placeholder="e.g., 8.75">
+          <div id="f-divider" class="f-sec" style="display:none;">
+            <div class="row">
+              <div class="form-group"><label>Panel Length</label><input type="number" step="0.0625" id="divL"></div>
+              <div class="form-group"><label>Form Bed Depth (Side A)</label><input type="number" step="0.0625" id="divD" value="10.5"></div>
+              <div class="form-group"><label>Slope Offset (Side B)</label><input type="number" step="0.0625" id="divO" placeholder="e.g. 8.75"></div>
             </div>
             <div class="form-group">
               <label>Angle Preset</label>
@@ -301,56 +493,241 @@
               </select>
             </div>
           </div>
-        </div>
 
-        <div class="form-group">
-          <label>Quantity</label>
-          <input type="number" id="itemQty" value="1" min="1">
-        </div>
-
-        <button class="btn btn-block" onclick="addItem()">Add To Cut List</button>
-      </div>
-    </div>
-
-    <div>
-      <div class="card print-target">
-        <h2>Saw Master Cut List</h2>
-        <div id="summaryStats" style="margin-bottom: 8px; color: var(--text-muted); font-size: 0.85rem;"></div>
-        
-        <div class="table-container">
-          <table id="cutTable">
-            <thead>
-              <tr>
-                <th>Mark</th>
-                <th>Qty</th>
-                <th>Material</th>
-                <th>Max Rip Width</th>
-                <th>Cut Length</th>
-                <th>Notes</th>
-                <th class="no-print">Action</th>
-              </tr>
-            </thead>
-            <tbody id="cutListBody"></tbody>
-          </table>
-        </div>
-
-        <div style="margin-top: 14px; display: flex; gap: 8px;" class="no-print">
-          <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
-          <button class="btn btn-danger" onclick="clearList()">Clear All</button>
+          <div class="form-group"><label>Quantity</label><input type="number" id="itemQty" value="1" min="1"></div>
+          <button class="btn btn-block" onclick="addCarpentry()">Add To Cut List</button>
         </div>
       </div>
 
-      <div class="card print-target">
-        <h2>Material Pull & Stock Shortage Check</h2>
-        <div id="optimizerOutput" style="font-size: 0.9rem; line-height: 1.5;">
-          <p style="color: var(--text-muted);">Add items above to calculate lumber sticks and check against local inventory.</p>
+      <div>
+        <div class="card print-target">
+          <h2>Saw Master Cut List</h2>
+          <div class="table-container">
+            <table id="cutTable">
+              <thead><tr><th>Mark</th><th>Qty</th><th>Material</th><th>Width</th><th>Cut Length</th><th>Notes</th><th class="no-print">X</th></tr></thead>
+              <tbody id="cutTbody"></tbody>
+            </table>
+          </div>
+          <div id="summaryStats" style="margin-top: 8px; color: var(--text-muted); font-size: 0.85rem;"></div>
+          <div id="foamNotes" style="margin-top:10px; font-weight:bold; color:var(--info);"></div>
+          
+          <div style="margin-top: 14px; display: flex; gap: 8px;" class="no-print">
+            <button class="btn btn-info" onclick="shareOrExport()">Share Report</button>
+            <button class="btn btn-secondary" onclick="exportCSV()">Download CSV</button>
+            <button class="btn btn-danger" onclick="clearList()">Clear All</button>
+          </div>
+        </div>
+
+        <div class="card print-target">
+          <h2>Material Pull & Stock Optimization</h2>
+          <div id="optOutput" style="font-size: 0.85rem;">
+            <p style="color: var(--text-muted);">Add items to calculate lumber layout.</p>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- ========================================== -->
+  <!-- TAB 2: STEEL DIVIDERS                      -->
+  <!-- ========================================== -->
+  <div id="tab-dividers" class="tab-content">
+    <div class="card no-print">
+      <h2>Add / Register New Divider Size</h2>
+      <div class="row">
+        <div class="form-group"><label>Profile Style</label><select id="divStyle"><option>45°</option><option>22.5°</option><option>Butt</option><option>Ship Lap</option></select></div>
+        <div class="form-group"><label>Length (Inches)</label><input type="number" step="0.125" id="divSizeL" placeholder="e.g. 48.5"></div>
+        <div class="form-group"><label style="color:transparent;">.</label><button class="btn btn-block" onclick="addDividerSize()">Register Size</button></div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card print-target"><h3>45° Dividers</h3><table class="div-table" data-style="45°"><thead><tr><th>Size</th><th>Good</th><th>Svc</th><th>Marked</th><th class="no-print">Adj</th></tr></thead><tbody></tbody></table></div>
+      <div class="card print-target"><h3>22.5° Dividers</h3><table class="div-table" data-style="22.5°"><thead><tr><th>Size</th><th>Good</th><th>Svc</th><th>Marked</th><th class="no-print">Adj</th></tr></thead><tbody></tbody></table></div>
+      <div class="card print-target"><h3>Butt Dividers</h3><table class="div-table" data-style="Butt"><thead><tr><th>Size</th><th>Good</th><th>Svc</th><th>Marked</th><th class="no-print">Adj</th></tr></thead><tbody></tbody></table></div>
+      <div class="card print-target"><h3>Ship Lap</h3><table class="div-table" data-style="Ship Lap"><thead><tr><th>Size</th><th>Good</th><th>Svc</th><th>Marked</th><th class="no-print">Adj</th></tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <div class="card no-print">
+      <h2>Combination Calculator</h2>
+      <div class="row">
+        <div class="form-group"><label>Target Panel Length (In)</label><input type="number" id="comboTarget"></div>
+        <div class="form-group"><label>Style</label><select id="comboStyle"><option>45°</option><option>Butt</option></select></div>
+        <button class="btn" onclick="calcCombo()">Find Combo</button>
+      </div>
+      <div id="comboResult" style="color:var(--success); margin-top:8px; font-weight:bold;"></div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TAB 3: REBAR & CUSTOM STEEL                -->
+  <!-- ========================================== -->
+  <div id="tab-rebar" class="tab-content active">
+    <div class="grid">
+      <div>
+        <div class="card print-target">
+          <h2>Full Length Rebar Inventory (20' Sticks)</h2>
+          <table id="rebarFullTable">
+            <thead><tr><th>Size</th><th>Full Sticks On-Hand</th><th class="no-print">Adj</th></tr></thead>
+            <tbody>
+              <tr><td>#3</td><td id="rbF3">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('rbF3',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('rbF3',-1)">-</button></td></tr>
+              <tr><td>#4</td><td id="rbF4">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('rbF4',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('rbF4',-1)">-</button></td></tr>
+              <tr><td>#5</td><td id="rbF5">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('rbF5',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('rbF5',-1)">-</button></td></tr>
+              <tr><td>#6</td><td id="rbF6">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('rbF6',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('rbF6',-1)">-</button></td></tr>
+              <tr><td>#7</td><td id="rbF7">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('rbF7',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('rbF7',-1)">-</button></td></tr>
+            </tbody>
+          </table>
+          
+          <h3 style="margin-top:16px;">Custom Form Steel</h3>
+          <table id="rebarCustomTable">
+            <thead><tr><th>Item</th><th>Qty On-Hand</th><th class="no-print">Adj</th></tr></thead>
+            <tbody>
+              <tr><td>Slab Connectors (~3' #3)</td><td id="rbSlabC">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('rbSlabC',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('rbSlabC',-1)">-</button></td></tr>
+              <tr><td>L-Bars (Toe Reinf. ~2' #3)</td><td id="rbLBar">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('rbLBar',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('rbLBar',-1)">-</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card no-print">
+          <h2>Fabricate Custom Steel</h2>
+          <div class="row">
+            <div class="form-group">
+                <label>Item to Fabricate</label>
+                <select id="fabItem">
+                    <option value="SlabC">Slab Connectors (uses ~3' #3)</option>
+                    <option value="LBar">L-Bars (uses ~2' #3)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Quantity to Make</label>
+                <input type="number" id="fabQty" value="10">
+            </div>
+            <button class="btn btn-info" onclick="fabricateSteel()">Fabricate</button>
+          </div>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-top:6px;">Automatically deducts required #3 rebar sticks and tracks specific scrap drops.</p>
+        </div>
+      </div>
+
+      <div>
+        <div class="card no-print">
+          <h2>Daily Usage Deduction</h2>
+          <div class="row">
+            <div class="form-group"><label>Bar Size</label><select id="useRbSize"><option>#3</option><option>#4</option><option>#5</option><option>#6</option><option>#7</option></select></div>
+            <div class="form-group"><label>Total LF Used (inc. buffer)</label><input type="number" id="useRbLF"></div>
+            <button class="btn btn-warning" onclick="deductRebar()">Deduct Sticks</button>
+          </div>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-top:6px;">Assumes standard 20' sticks. Will deduct full sticks required and automatically push drops/leftovers to the scrap inventory below.</p>
+        </div>
+
+        <div class="card print-target">
+          <h2>Specific Scrap Inventory (Drops)</h2>
+          <div class="row no-print">
+            <div class="form-group"><select id="scrapSize"><option>#3</option><option>#4</option><option>#5</option><option>#6</option><option>#7</option></select></div>
+            <div class="form-group"><input type="number" id="scrapLen" placeholder="Length (In)"></div>
+            <div class="form-group"><input type="number" id="scrapQty" value="1"></div>
+            <button class="btn" onclick="addRebarScrap()">Add Scrap</button>
+          </div>
+          <table style="margin-top:8px;">
+            <thead><tr><th>Size</th><th>Length</th><th>Qty</th><th class="no-print">Action</th></tr></thead>
+            <tbody id="rbScrapTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TAB 4: HARDWARE & EMBEDS                   -->
+  <!-- ========================================== -->
+  <div id="tab-hardware" class="tab-content">
+    <div class="grid">
+      <div class="card print-target">
+        <h2>Rigging & Hardware Inventory</h2>
+        <table>
+          <thead><tr><th>Item</th><th>On-Hand</th><th class="no-print">Adj</th></tr></thead>
+          <tbody>
+            <tr><td>1.2T Dog Bones</td><td id="hwD1">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('hwD1',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('hwD1',-1)">-</button></td></tr>
+            <tr><td>2.0T Dog Bones</td><td id="hwD2">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('hwD2',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('hwD2',-1)">-</button></td></tr>
+            <tr><td>Half-Sphere Blockouts</td><td id="hwBlk">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('hwBlk',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('hwBlk',-1)">-</button></td></tr>
+            <tr><td>S-Loops</td><td id="hwSLoop">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('hwSLoop',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('hwSLoop',-1)">-</button></td></tr>
+            <tr><td>D-Loops</td><td id="hwDLoop">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('hwDLoop',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('hwDLoop',-1)">-</button></td></tr>
+            <tr><td>Seal Plates</td><td id="hwSeal">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('hwSeal',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('hwSeal',-1)">-</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div>
+        <div class="card no-print">
+          <h2>Demand Calculators</h2>
+          
+          <h3>Rigging Minimums</h3>
+          <div class="row">
+            <div class="form-group"><label>Panel Weight (LBS)</label><input type="number" id="calcWeight" placeholder="e.g. 13500"></div>
+            <button class="btn btn-info" onclick="calcRigging()">Calculate</button>
+          </div>
+          <div id="riggingResult" style="color:var(--success); font-weight:bold; margin-bottom:12px;"></div>
+
+          <h3>Hardware per Panel</h3>
+          <div class="row">
+            <div class="form-group"><label>Panel Perimeter (LF)</label><input type="number" id="calcPerim" placeholder="Total LF"></div>
+            <button class="btn btn-info" onclick="calcHW()">Calculate</button>
+          </div>
+          <div id="hwResult" style="color:var(--success); font-weight:bold;"></div>
+        </div>
+
+        <div class="card print-target">
+          <h2>Chair Inventory</h2>
+          <div class="row no-print">
+            <div class="form-group"><input type="text" id="chairSize" placeholder="Size (e.g. 2.5) "></div>
+            <div class="form-group"><input type="number" id="chairQty" value="100"></div>
+            <button class="btn" onclick="addChair()">Add</button>
+          </div>
+          <table style="margin-top:8px;">
+            <thead><tr><th>Size</th><th>Count</th><th class="no-print">Adj</th></tr></thead>
+            <tbody id="chairTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TAB 5: CONCRETE VOLUME                     -->
+  <!-- ========================================== -->
+  <div id="tab-concrete" class="tab-content">
+    <div class="card no-print">
+      <h2>Net Yardage Calculator</h2>
+      <div class="grid-3">
+        <div class="form-group"><label>Length (In)</label><input type="number" id="cyL"></div>
+        <div class="form-group"><label>Width (In)</label><input type="number" id="cyW"></div>
+        <div class="form-group"><label>Thickness (In)</label><input type="number" id="cyT"></div>
+      </div>
+      <h3>Deductions (Voids / Pipes)</h3>
+      <div class="grid-3">
+        <div class="form-group"><label>Pipe OD (Inches)</label><input type="number" id="cyPipeOD"></div>
+        <div class="form-group"><label>Pipe Length (Inches)</label><input type="number" id="cyPipeL"></div>
+        <div class="form-group"><label>Qty of Voids</label><input type="number" id="cyPipeQty" value="1"></div>
+      </div>
+      <button class="btn btn-block btn-success" onclick="calcCY()">Calculate Net Cubic Yards</button>
+    </div>
+    
+    <div class="card print-target">
+      <h2>Volume Result</h2>
+      <div id="cyResult" style="font-size: 2rem; color: var(--accent); font-weight: bold; text-align: center; padding: 20px;">0.00 CY</div>
+      <div id="cyBreakdown" style="text-align: center; color: var(--text-muted);"></div>
+    </div>
+  </div>
+
   <script>
+    // ---- Global State & Constants ----
+    const keys = ['inv8','inv10','inv12','invPly','inv2x4x8U','inv2x6x8T','inv2x6x10T','inv2x6x14U',
+                  'rbF3','rbF4','rbF5','rbF6','rbF7','rbSlabC','rbLBar',
+                  'hwD1','hwD2','hwBlk','hwSLoop','hwDLoop','hwSeal'];
+    
     let cutItems = [];
+    let divData = [];
+    let scrapData = [];
+    let chairData = [];
     let lastCalculatedDemand = { count8: 0, count10: 0, count12: 0, count2x4: 0, count2x6U: 0, count2x6T8: 0, count2x6T10: 0, sheetsPly: 0 };
 
     const HEADER_CAP_OVERAGE = 3.25; 
@@ -358,43 +735,58 @@
     const OUTSIDE_FORM_CAP = 3.0; 
     const SAW_KERF = 0.125; 
     const SCRAP_THRESHOLD = 24.0; 
-    const PLYWOOD_WIDTH = 48.0;
+    const PLYWOOD_WIDTH = 48.0; 
     const PLYWOOD_LENGTH = 96.0;
 
-    // ---- Data Management (JSON Export/Import) ----
-    function exportDataBackup() {
-      const backupData = {};
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key.startsWith('shop_')) {
-          backupData[key] = localStorage.getItem(key);
-        }
-      }
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData));
-      const a = document.createElement('a');
-      a.setAttribute("href", dataStr);
-      a.setAttribute("download", `ShopBackup_${new Date().toISOString().slice(0,10)}.json`);
-      a.click();
+    // ---- Initialization & Loading ----
+    function initInventory() {
+      keys.forEach(k => { 
+        if(!localStorage.getItem(k)) localStorage.setItem(k, '0'); 
+      });
+      divData = JSON.parse(localStorage.getItem('divData') || '[]');
+      scrapData = JSON.parse(localStorage.getItem('scrapData') || '[]');
+      chairData = JSON.parse(localStorage.getItem('chairData') || '[{"id":1,"sz":"1","qty":0},{"id":2,"sz":"2","qty":0},{"id":3,"sz":"2.5","qty":0},{"id":4,"sz":"3","qty":0}]');
+      reloadAll();
     }
 
-    function importDataBackup(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const data = JSON.parse(e.target.result);
-          for (const key in data) {
-            if (key.startsWith('shop_')) localStorage.setItem(key, data[key]);
-          }
-          alert("Backup Restored Successfully!");
-          location.reload();
-        } catch (err) { alert("Invalid backup file."); }
-      };
-      reader.readAsText(file);
+    function reloadAll() {
+      document.getElementById('invDisplay8').innerText = localStorage.getItem('inv8');
+      document.getElementById('invDisplay10').innerText = localStorage.getItem('inv10');
+      document.getElementById('invDisplay12').innerText = localStorage.getItem('inv12');
+      document.getElementById('invDisplayPly').innerText = localStorage.getItem('invPly');
+      document.getElementById('invDisplay2x4x8U').innerText = localStorage.getItem('inv2x4x8U');
+      document.getElementById('invDisplay2x6x8T').innerText = localStorage.getItem('inv2x6x8T');
+      document.getElementById('invDisplay2x6x10T').innerText = localStorage.getItem('inv2x6x10T');
+      document.getElementById('invDisplay2x6x14U').innerText = localStorage.getItem('inv2x6x14U');
+      
+      keys.slice(8).forEach(k => { 
+        if(document.getElementById(k)) document.getElementById(k).innerText = localStorage.getItem(k); 
+      });
+      
+      renderDividers(); 
+      renderScrap(); 
+      renderChairs();
     }
 
-    // ---- Job Management ----
+    function adj(key, amt) {
+      let v = parseInt(localStorage.getItem(key)) + amt;
+      localStorage.setItem(key, Math.max(0, v)); 
+      reloadAll();
+    }
+
+    function updateInventoryDirect() {
+      adj(document.getElementById('invSelectType').value, parseInt(document.getElementById('invCountInput').value)||0);
+      document.getElementById('invCountInput').value = '';
+    }
+
+    function switchTab(id) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    // ---- Data Management ----
     function populateJobDropdown() {
       const dropdown = document.getElementById('savedJobsDropdown');
       dropdown.innerHTML = '<option value="">-- Select a Job --</option>';
@@ -423,7 +815,8 @@
       const savedData = localStorage.getItem(key);
       if (savedData) {
         cutItems = JSON.parse(savedData);
-        renderCutList(); optimizeStock();
+        renderCutList(); 
+        optimizeStock();
         document.getElementById('jobNameInput').value = key.replace('shop_job_', '');
       }
     }
@@ -432,98 +825,53 @@
       const key = document.getElementById('savedJobsDropdown').value;
       if (!key) return;
       if (confirm(`Delete ${key.replace('shop_job_', '')}?`)) {
-        localStorage.removeItem(key); populateJobDropdown(); document.getElementById('savedJobsDropdown').value = '';
+        localStorage.removeItem(key); 
+        populateJobDropdown(); 
+        document.getElementById('savedJobsDropdown').value = '';
       }
     }
 
-    // ---- Inventory Tracking ----
-    function initInventory() {
-      if (localStorage.getItem('shop_inv_8') === null) localStorage.setItem('shop_inv_8', '15');
-      if (localStorage.getItem('shop_inv_10') === null) localStorage.setItem('shop_inv_10', '25');
-      if (localStorage.getItem('shop_inv_12') === null) localStorage.setItem('shop_inv_12', '10');
-      if (localStorage.getItem('shop_inv_ply') === null) localStorage.setItem('shop_inv_ply', '12');
-      if (localStorage.getItem('shop_inv_2x4x8_u') === null) localStorage.setItem('shop_inv_2x4x8_u', '20');
-      if (localStorage.getItem('shop_inv_2x6x8_t') === null) localStorage.setItem('shop_inv_2x6x8_t', '15');
-      if (localStorage.getItem('shop_inv_2x6x10_t') === null) localStorage.setItem('shop_inv_2x6x10_t', '15');
-      if (localStorage.getItem('shop_inv_2x6x14_u') === null) localStorage.setItem('shop_inv_2x6x14_u', '15');
-      renderInventoryDisplay();
+    function exportDataBackup() {
+      const backupData = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('shop_') || key.startsWith('inv') || key.startsWith('rb') || key.startsWith('hw')) {
+          backupData[key] = localStorage.getItem(key);
+        }
+      }
+      backupData['divData'] = localStorage.getItem('divData');
+      backupData['scrapData'] = localStorage.getItem('scrapData');
+      backupData['chairData'] = localStorage.getItem('chairData');
+
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData));
+      const a = document.createElement('a');
+      a.setAttribute("href", dataStr);
+      a.setAttribute("download", `ShopBackup_${new Date().toISOString().slice(0,10)}.json`);
+      a.click();
     }
 
-    function renderInventoryDisplay() {
-      document.getElementById('invDisplay8').innerText = localStorage.getItem('shop_inv_8') || 0;
-      document.getElementById('invDisplay10').innerText = localStorage.getItem('shop_inv_10') || 0;
-      document.getElementById('invDisplay12').innerText = localStorage.getItem('shop_inv_12') || 0;
-      document.getElementById('invDisplayPly').innerText = localStorage.getItem('shop_inv_ply') || 0;
-      document.getElementById('invDisplay2x4x8U').innerText = localStorage.getItem('shop_inv_2x4x8_u') || 0;
-      document.getElementById('invDisplay2x6x8T').innerText = localStorage.getItem('shop_inv_2x6x8_t') || 0;
-      document.getElementById('invDisplay2x6x10T').innerText = localStorage.getItem('shop_inv_2x6x10_t') || 0;
-      document.getElementById('invDisplay2x6x14U').innerText = localStorage.getItem('shop_inv_2x6x14_u') || 0;
+    function importDataBackup(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          for (const key in data) {
+            localStorage.setItem(key, data[key]);
+          }
+          alert("Backup Restored Successfully!");
+          location.reload();
+        } catch (err) { alert("Invalid backup file."); }
+      };
+      reader.readAsText(file);
     }
 
-    function updateInventoryDirect() {
-      const type = document.getElementById('invSelectType').value;
-      const count = parseInt(document.getElementById('invCountInput').value);
-      if (isNaN(count)) return alert('Enter a valid quantity.');
-
-      let key = 'shop_inv_8';
-      if (type === 'inv10') key = 'shop_inv_10';
-      else if (type === 'inv12') key = 'shop_inv_12';
-      else if (type === 'invPly') key = 'shop_inv_ply';
-      else if (type === 'inv2x4x8U') key = 'shop_inv_2x4x8_u';
-      else if (type === 'inv2x6x8T') key = 'shop_inv_2x6x8_t';
-      else if (type === 'inv2x6x10T') key = 'shop_inv_2x6x10_t';
-      else if (type === 'inv2x6x14U') key = 'shop_inv_2x6x14_u';
-
-      let current = parseInt(localStorage.getItem(key)) || 0;
-      localStorage.setItem(key, Math.max(0, current + count).toString());
-      renderInventoryDisplay(); document.getElementById('invCountInput').value = '';
-    }
-
-    function deductCutListFromInventory() {
-      if (cutItems.length === 0) return alert('No cuts to deduct.');
-      
-      const map = [
-        ['shop_inv_8', lastCalculatedDemand.count8],
-        ['shop_inv_10', lastCalculatedDemand.count10],
-        ['shop_inv_12', lastCalculatedDemand.count12],
-        ['shop_inv_ply', lastCalculatedDemand.sheetsPly],
-        ['shop_inv_2x4x8_u', lastCalculatedDemand.count2x4],
-        ['shop_inv_2x6x14_u', lastCalculatedDemand.count2x6U],
-        ['shop_inv_2x6x8_t', lastCalculatedDemand.count2x6T8],
-        ['shop_inv_2x6x10_t', lastCalculatedDemand.count2x6T10]
-      ];
-
-      map.forEach(([key, demand]) => {
-        let current = parseInt(localStorage.getItem(key)) || 0;
-        localStorage.setItem(key, Math.max(0, current - demand).toString());
-      });
-
-      renderInventoryDisplay(); optimizeStock();
-      alert('Cut list deducted from inventory rack successfully.');
-    }
-
-    // ---- App Logic ----
-    function toggleItemFields() {
-      document.querySelectorAll('.input-section').forEach(el => el.style.display = 'none');
-      const type = document.getElementById('itemType').value;
-      if (type === 'window' || type === 'door') document.getElementById('openingFields').style.display = 'block';
-      else if (type === 'divider') document.getElementById('dividerFields').style.display = 'block';
-      else if (type === 'ledge') document.getElementById('ledgeFields').style.display = 'block';
-      else if (type === 'slab') document.getElementById('slabFields').style.display = 'block';
-    }
-
-    function handleAnglePresetChange() {
-      const preset = document.getElementById('divAnglePreset').value;
-      const depth = parseFloat(document.getElementById('divFormDepth').value) || 10.5;
-      if (preset === '45') document.getElementById('divSlopeOffset').value = depth.toFixed(4);
-      else if (preset === '22.5') document.getElementById('divSlopeOffset').value = "4.375";
-      else if (preset === '78.75') document.getElementById('divSlopeOffset').value = "2.0625";
-    }
-
+    // ---- Helpers & Math ----
     function toFraction(val) {
       if (!val || isNaN(val)) return '0"';
-      const whole = Math.floor(val);
-      const remainder = val - whole;
+      const whole = Math.floor(val); 
+      const remainder = val - whole; 
       const sixteenths = Math.round(remainder * 16);
       if (sixteenths === 0) return `${whole}"`;
       if (sixteenths === 16) return `${whole + 1}"`;
@@ -534,15 +882,15 @@
 
     function toFeetAndInches(val) {
       if (!val || isNaN(val)) return '0"';
-      const feet = Math.floor(val / 12);
+      const feet = Math.floor(val / 12); 
       const inchesDec = val % 12;
-      const wholeInches = Math.floor(inchesDec);
-      const remainder = inchesDec - wholeInches;
+      const wholeInches = Math.floor(inchesDec); 
+      const remainder = inchesDec - wholeInches; 
       const sixteenths = Math.round(remainder * 16);
-
       let finalInches = wholeInches; let fracStr = '';
-      if (sixteenths === 16) { finalInches += 1; } 
-      else if (sixteenths > 0) {
+      if (sixteenths === 16) { 
+        finalInches += 1; 
+      } else if (sixteenths > 0) {
         let num = sixteenths; let den = 16;
         while (num % 2 === 0 && den % 2 === 0) { num /= 2; den /= 2; }
         fracStr = ` ${num}/${den}`;
@@ -575,273 +923,192 @@
       return parseFloat(str) || 0;
     }
 
-    async function handleImageUpload(e) {
+    async function handleImageUpload(e, target) {
       const file = e.target.files[0];
       if (!file) return;
-      const preview = document.getElementById('imagePreview');
-      preview.src = URL.createObjectURL(file); preview.style.display = 'block';
-      document.getElementById('ocrStatus').innerText = "Analyzing print...";
+      const previewId = target === 'carpentry' ? 'imagePreview' : 'imagePreview';
+      const statusId = target === 'carpentry' ? 'ocrStatus' : 'ocrStatus';
+      const textId = target === 'carpentry' ? 'rawOcrText' : 'rawOcrText';
+
+      const preview = document.getElementById(previewId);
+      preview.src = URL.createObjectURL(file); 
+      preview.style.display = 'block';
+      document.getElementById(statusId).innerText = "Analyzing print...";
+
       try {
         const worker = await Tesseract.createWorker('eng');
         const ret = await worker.recognize(file);
-        document.getElementById('rawOcrText').value = ret.data.text;
-        document.getElementById('ocrStatus').innerText = "OCR Complete.";
+        document.getElementById(textId).value = ret.data.text;
+        document.getElementById(statusId).innerText = "OCR Complete.";
         await worker.terminate();
-      } catch (err) { document.getElementById('ocrStatus').innerText = "Error reading image."; }
+      } catch (err) { 
+        document.getElementById(statusId).innerText = "Error reading image."; 
+      }
     }
 
     function parseOcrTextToInputs() {
-      const text = document.getElementById('rawOcrText').value;
-      if (!text) return;
-
-      const slabMatch = text.match(/SLAB/i);
-      if (slabMatch) {
-          document.getElementById('itemType').value = 'slab'; toggleItemFields();
-          document.getElementById('itemMark').value = "SLAB-" + Math.floor(Math.random() * 90 + 10);
-      }
-
-      const ledgeMatch = text.match(/(?:BRICK|SUPPORT)\s*LEDGE/i);
-      if (ledgeMatch && !slabMatch) {
-        document.getElementById('itemType').value = 'ledge'; toggleItemFields();
-        document.getElementById('ledgeStyle').value = /SUPPORT/i.test(ledgeMatch[0]) ? 'support' : 'brick';
-        const lenMatch = text.match(/(\d+[\s\-_]+(?:\d+\/\d+)?)\s*["']/);
-        if (lenMatch) document.getElementById('ledgeLength').value = parseImperialToInches(lenMatch[1]);
-        document.getElementById('itemMark').value = "LDG-" + Math.floor(Math.random() * 90 + 10);
-        return;
-      }
-
-      const openingMatch = text.match(/(\d+[\d\s\/\.'"-]*)\s*[xX]\s*(\d+[\d\s\/\.'"-]*)/);
-      if (openingMatch) {
-        if (slabMatch) {
-            document.getElementById('slabWidth').value = parseImperialToInches(openingMatch[1]);
-            document.getElementById('slabLength').value = parseImperialToInches(openingMatch[2]);
-        } else {
-            document.getElementById('itemType').value = /door/i.test(text) ? 'door' : 'window'; toggleItemFields();
-            document.getElementById('openWidth').value = parseImperialToInches(openingMatch[1]);
-            document.getElementById('openHeight').value = parseImperialToInches(openingMatch[2]);
-            document.getElementById('itemMark').value = (/door/i.test(text) ? "D-" : "W-") + Math.floor(Math.random() * 90 + 10);
-        }
-      }
+      document.getElementById('ocrStatus').innerText = "OCR manual override active. Pattern rules not deployed in this version.";
     }
 
-    function addItem(editingId = null) {
+    function toggleFormFields() {
+      document.querySelectorAll('#tab-carpentry .f-sec').forEach(el => el.style.display = 'none');
+      let v = document.getElementById('itemType').value;
+      if(v === 'window' || v === 'door') document.getElementById('f-window').style.display = 'block';
+      else if(v === 'slab') document.getElementById('f-slab').style.display = 'block';
+      else if(v === 'ledge') document.getElementById('f-ledge').style.display = 'block';
+      else if(v === 'divider') document.getElementById('f-divider').style.display = 'block';
+    }
+
+    function handleAnglePresetChange() {
+      const preset = document.getElementById('divAnglePreset').value;
+      const depth = parseFloat(document.getElementById('divFormDepth').value) || 10.5;
+      if (preset === '45') document.getElementById('divSlopeOffset').value = depth.toFixed(4);
+      else if (preset === '22.5') document.getElementById('divSlopeOffset').value = "4.375";
+      else if (preset === '78.75') document.getElementById('divSlopeOffset').value = "2.0625";
+    }
+
+    function addCarpentry() {
       const type = document.getElementById('itemType').value;
-      const mark = document.getElementById('itemMark').value || 'ITEM';
-      const qty = parseInt(document.getElementById('itemQty').value) || 1;
-      const groupId = editingId || Date.now(); 
+      const mk = document.getElementById('itemMark').value || 'MK';
+      const q = parseInt(document.getElementById('itemQty').value)||1;
+      let gid = Date.now();
+      let origParams = { type, mk, q };
 
-      let origParams = { type, mark, qty };
+      if(type==='window'||type==='door') {
+        const w=parseFloat(document.getElementById('openW').value), h=parseFloat(document.getElementById('openH').value), d=parseFloat(document.getElementById('openD').value);
+        if(!w||!h) return alert("Enter width and height.");
+        origParams = { ...origParams, w, h, d };
 
-      if (type === 'window' || type === 'door') {
-        const w = parseFloat(document.getElementById('openWidth').value);
-        const h = parseFloat(document.getElementById('openHeight').value);
-        const rip = parseFloat(document.getElementById('openRipWidth').value) || 10.38;
-        if (isNaN(w) || isNaN(h)) return alert('Enter valid width and height.');
-        origParams = { ...origParams, w, h, rip, core: document.getElementById('openCoreType').value };
+        cutItems.push({id:gid, mk, q, matCat:'2x12', mat:'2x12', tag:'tag-2x12', w:d, cutLength:w+3.25, desc:'Header', origParams});
+        cutItems.push({id:gid+1, mk, q, matCat:'2x12', mat:'2x12', tag:type==='window'?'tag-2x12':'tag-door', w:d, cutLength:w+(type==='window'?3.25:0.125), desc:type==='window'?'Sill':'Spreader', origParams});
+        cutItems.push({id:gid+2, mk, q:2*q, matCat:'2x12', mat:'2x12', tag:'tag-2x12', w:d, cutLength:h, desc:'Jambs', origParams});
+      } else if(type==='slab') {
+        const l=parseFloat(document.getElementById('slabL').value), w=parseFloat(document.getElementById('slabW').value);
+        const m=document.getElementById('slabMat').value, sec=parseInt(document.getElementById('slabSec').value)||1;
+        const foam=document.getElementById('slabFoam').checked;
+        if(!l||!w) return alert("Enter length and width.");
+        origParams = { ...origParams, l, w, m, sec, foam };
 
-        cutItems.push({ id: groupId, mark, qty, materialCat: '2x12', material: '2x12 Ripped (10.38")', tagClass: 'tag-2x12', width: rip, cutLength: w + HEADER_CAP_OVERAGE, desc: `Top Header (ID + 3.25" Cap)`, origParams });
-        if (type === 'window') {
-          cutItems.push({ id: groupId+1, mark, qty, materialCat: '2x12', material: '2x12 Ripped (10.38")', tagClass: 'tag-2x12', width: rip, cutLength: w + HEADER_CAP_OVERAGE, desc: `Bottom Sill (ID + 3.25" Cap)`, origParams });
-        } else {
-          cutItems.push({ id: groupId+1, mark, qty, materialCat: '2x12', material: '2x12 Ripped (10.38")', tagClass: 'tag-door', width: rip, cutLength: w + DOOR_SILL_OVERAGE, desc: `Bottom Spreader (ID + 1/8" Field Cut)`, origParams });
+        let md='2x6 Untreated', wNom=5.5, tag='tag-2x6';
+        if(m==='2x4_U') { md='2x4 Untreated'; wNom=3.5; tag='tag-2x4'; } 
+        else if(m==='2x6_T8' || m==='2x6_T10') { md='2x6 Treated'; }
+
+        cutItems.push({id:gid, mk, q:2*q, matCat:m, mat:md, tag, w:wNom, cutLength:l+3.0, desc:'Long Rails (Cap)', origParams});
+        cutItems.push({id:gid+1, mk, q:2*q, matCat:m, mat:md, tag, w:wNom, cutLength:w, desc:'Short Rails', origParams});
+        
+        if(sec>1) {
+          cutItems.push({id:gid+2, mk, q:(sec-1)*2*q, matCat:m, mat:md, tag, w:wNom, cutLength:w, desc:'Divider Faces (Sandwich)', origParams});
+          let blks = Math.ceil(w/18); 
+          cutItems.push({id:gid+3, mk, q:(sec-1)*blks*q, matCat:'2x4_U', mat:'2x4 Untreated', tag:'tag-2x4', w:3.5, cutLength:5.5, desc:'Sandwich Blocks', origParams});
         }
-        cutItems.push({ id: groupId+2, mark, qty: 2 * qty, materialCat: '2x12', material: '2x12 Ripped (10.38")', tagClass: 'tag-2x12', width: rip, cutLength: h, desc: `Side Jambs (Inside Height)`, origParams });
-
-      } else if (type === 'slab') {
-        const len = parseFloat(document.getElementById('slabLength').value);
-        const wid = parseFloat(document.getElementById('slabWidth').value);
-        const mat = document.getElementById('slabMaterial').value;
-        const sections = parseInt(document.getElementById('slabSections').value) || 1;
-        if (isNaN(len) || isNaN(wid)) return alert('Enter valid length and width.');
-        origParams = { ...origParams, len, wid, mat, sections };
-
-        let matDesc = '2x6 Untreated'; let wNom = 5.5; let tag = 'tag-2x6';
-        if(mat === '2x4_U') { matDesc = '2x4 Untreated'; wNom = 3.5; tag = 'tag-2x4'; }
-        else if(mat === '2x6_T8') { matDesc = '2x6 Treated'; }
-        else if(mat === '2x6_T10') { matDesc = '2x6 Treated'; }
-
-        cutItems.push({ id: groupId, mark, qty: 2 * qty, materialCat: mat, material: matDesc, tagClass: tag, width: wNom, cutLength: len + OUTSIDE_FORM_CAP, desc: `Slab Long Rails`, origParams });
-        cutItems.push({ id: groupId+1, mark, qty: 2 * qty, materialCat: mat, material: matDesc, tagClass: tag, width: wNom, cutLength: wid, desc: `Slab Short Rails`, origParams });
-        if (sections > 1) {
-            cutItems.push({ id: groupId+2, mark, qty: (sections - 1) * qty, materialCat: mat, material: matDesc, tagClass: tag, width: wNom, cutLength: wid, desc: `Slab Section Dividers`, origParams });
+        if(foam) {
+          let fl = l-8, fw = w-8;
+          document.getElementById('foamNotes').innerText += `\n* MK: ${mk} requires 1" Foam Cut: ${fl}" x ${fw}"`;
         }
-
-      } else if (type === 'ledge') {
-        const len = parseFloat(document.getElementById('ledgeLength').value);
-        const style = document.getElementById('ledgeStyle').value;
-        const mat = document.getElementById('ledgeMaterial').value;
-        if (isNaN(len)) return alert('Enter valid length.');
-        origParams = { ...origParams, len, style, mat };
-
-        let matDesc = '2x6 Untreated';
-        if(mat === '2x6_T8' || mat === '2x6_T10') matDesc = '2x6 Treated';
-
-        cutItems.push({ id: groupId, mark, qty, materialCat: mat, material: matDesc, tagClass: 'tag-2x6', width: 5.5, cutLength: len, desc: `${style === 'brick' ? 'Brick' : 'Support'} Ledge`, origParams });
-
-      } else if (type === 'divider') {
-        const panelLength = parseFloat(document.getElementById('divPanelHeight').value) || 0;
-        const sideA = parseFloat(document.getElementById('divFormDepth').value) || 10.5;
-        let sideB = parseFloat(document.getElementById('divSlopeOffset').value) || 0;
-        const preset = document.getElementById('divAnglePreset').value;
-        if (preset === '45' && sideB === 0) sideB = sideA;
-        origParams = { ...origParams, panelLength, sideA, sideB, preset };
-
-        let betaAngle = 0; let sideC = sideA;
-        if (sideB > 0) {
-          betaAngle = (Math.atan(sideB / sideA) * (180 / Math.PI)).toFixed(1);
-          sideC = Math.sqrt((sideA * sideA) + (sideB * sideB));
-        }
-        cutItems.push({ id: groupId, mark, qty, materialCat: 'Ply', material: `0.75" Plywood`, tagClass: 'tag-plywood', width: sideC, cutLength: panelLength > 0 ? panelLength : sideC, desc: `Sloped Divider (Bevel: ${betaAngle}°)`, origParams });
+      } else if(type==='ledge') {
+        const l=parseFloat(document.getElementById('ldgL').value), style=document.getElementById('ldgType').value;
+        const mat=document.getElementById('ledgeMaterial').value;
+        if(!l) return alert("Enter length.");
+        origParams = { ...origParams, l, style, mat };
+        let md='2x6 Untreated';
+        if(mat==='2x6_T8' || mat==='2x6_T10') md='2x6 Treated';
+        cutItems.push({id:gid, mk, q, matCat:mat, mat:md, tag:'tag-2x6', w:5.5, cutLength:l, desc:`${style} Ledge`, origParams});
+      } else if(type==='divider') {
+        const pl=parseFloat(document.getElementById('divL').value)||0, d=parseFloat(document.getElementById('divD').value)||10.5, off=parseFloat(document.getElementById('divO').value)||0;
+        let c = off>0 ? Math.sqrt(d*d + off*off) : d;
+        origParams = { ...origParams, pl, d, off };
+        cutItems.push({id:gid, mk, q, matCat:'Ply', mat:'3/4" Ply', tag:'tag-ply', w:c, cutLength:pl>0?pl:c, desc:'Sloped Divider', origParams});
       }
-
       renderCutList(); optimizeStock();
     }
 
     function editItem(groupId) {
-      const item = cutItems.find(i => i.id === groupId || i.id === groupId+1 || i.id === groupId+2);
+      const item = cutItems.find(i => i.id === groupId || i.id === groupId+1 || i.id === groupId+2 || i.id === groupId+3);
       if(!item || !item.origParams) return;
-      
       const p = item.origParams;
-      document.getElementById('itemType').value = p.type;
-      toggleItemFields();
-      document.getElementById('itemMark').value = p.mark;
-      document.getElementById('itemQty').value = p.qty;
+      
+      document.getElementById('itemType').value = p.type; toggleFormFields();
+      document.getElementById('itemMark').value = p.mk; document.getElementById('itemQty').value = p.q;
 
       if(p.type === 'window' || p.type === 'door') {
-          document.getElementById('openWidth').value = p.w;
-          document.getElementById('openHeight').value = p.h;
-          document.getElementById('openRipWidth').value = p.rip;
-          document.getElementById('openCoreType').value = p.core;
+          document.getElementById('openW').value = p.w; document.getElementById('openH').value = p.h; document.getElementById('openD').value = p.d;
       } else if(p.type === 'slab') {
-          document.getElementById('slabLength').value = p.len;
-          document.getElementById('slabWidth').value = p.wid;
-          document.getElementById('slabMaterial').value = p.mat;
-          document.getElementById('slabSections').value = p.sections;
+          document.getElementById('slabL').value = p.l; document.getElementById('slabW').value = p.w; document.getElementById('slabMat').value = p.m; document.getElementById('slabSec').value = p.sec; document.getElementById('slabFoam').checked = p.foam;
       } else if(p.type === 'ledge') {
-          document.getElementById('ledgeLength').value = p.len;
-          document.getElementById('ledgeStyle').value = p.style;
-          document.getElementById('ledgeMaterial').value = p.mat;
+          document.getElementById('ldgL').value = p.l; document.getElementById('ldgType').value = p.style; document.getElementById('ledgeMaterial').value = p.mat;
       } else if(p.type === 'divider') {
-          document.getElementById('divPanelHeight').value = p.panelLength;
-          document.getElementById('divFormDepth').value = p.sideA;
-          document.getElementById('divSlopeOffset').value = p.sideB;
-          document.getElementById('divAnglePreset').value = p.preset;
+          document.getElementById('divL').value = p.pl; document.getElementById('divD').value = p.d; document.getElementById('divO').value = p.off;
       }
-      
-      cutItems = cutItems.filter(i => i.origParams !== p);
+      cutItems = cutItems.filter(i => i.origParams !== p); 
       renderCutList(); optimizeStock();
     }
 
-    function removeItem(origParamsObj) {
-      cutItems = cutItems.filter(item => item.origParams !== origParamsObj);
-      renderCutList(); optimizeStock();
-    }
-    
-    function clearList() {
-      if (confirm('Clear entire cut sheet?')) { cutItems = []; renderCutList(); optimizeStock(); }
+    function clearList() { 
+      if (confirm('Clear cuts?')) { cutItems=[]; document.getElementById('foamNotes').innerText=''; renderCutList(); optimizeStock(); } 
     }
 
     function renderCutList() {
-      const tbody = document.getElementById('cutListBody');
-      tbody.innerHTML = '';
+      const tbody = document.getElementById('cutTbody'); tbody.innerHTML = '';
       let totalPieces = 0; let linearInches = 0;
-
-      const uniqueGroups = new Set();
-      cutItems.forEach(i => uniqueGroups.add(i.origParams));
+      const uniqueGroups = new Set(); cutItems.forEach(i => uniqueGroups.add(i.origParams));
 
       uniqueGroups.forEach(params => {
           const groupItems = cutItems.filter(i => i.origParams === params);
           groupItems.forEach((item, index) => {
               totalPieces += item.qty;
               if (item.materialCat === '2x12') linearInches += (item.cutLength * item.qty);
-              
               const tr = document.createElement('tr');
               tr.innerHTML = `
-                <td><strong>${item.mark}</strong></td>
-                <td><strong>${item.qty}</strong></td>
-                <td><span class="tag ${item.tagClass}">${item.material}</span></td>
-                <td>${toFraction(item.width)}</td>
-                <td><strong>${toFraction(item.cutLength)}</strong></td>
-                <td>${item.desc}</td>
+                <td><strong>${item.mark}</strong></td><td><strong>${item.qty}</strong></td><td><span class="tag ${item.tagClass}">${item.material}</span></td>
+                <td>${toFraction(item.width)}</td><td><strong>${toFraction(item.cutLength)}</strong></td><td>${item.desc}</td>
                 <td class="no-print">
-                  ${index === 0 ? `<button class="btn btn-warning" style="padding: 4px 8px; margin-right:4px;" onclick="editItem(${item.id})">Edit</button><button class="btn btn-danger" style="padding: 4px 8px;" onclick="removeItem(cutItems.find(i=>i.id===${item.id}).origParams)">X</button>` : ''}
-                </td>
-              `;
+                  ${index === 0 ? `<button class="btn btn-warning btn-sm" onclick="editItem(${item.id})">E</button> <button class="btn btn-danger btn-sm" onclick="cutItems = cutItems.filter(i => i.origParams !== cutItems.find(x=>x.id===${item.id}).origParams); renderCutList(); optimizeStock();">X</button>` : ''}
+                </td>`;
               tbody.appendChild(tr);
           });
       });
-
-      const totalLbrFeet = (linearInches / 12).toFixed(1);
-      const totalBdFeet = ((linearInches * 1.5 * 11.25) / 144).toFixed(1);
-      document.getElementById('summaryStats').innerText = `Total Pieces: ${totalPieces} | 2x12 Linear Feet: ${totalLbrFeet} LF (~${totalBdFeet} BF)`;
+      document.getElementById('summaryStats').innerText = `Pieces: ${totalPieces} | 2x12 LF: ${(linearInches/12).toFixed(1)}`;
     }
 
     function optimizeStock() {
-      const optContainer = document.getElementById('optimizerOutput');
-      if (cutItems.length === 0) {
-        optContainer.innerHTML = `<p style="color: var(--text-muted);">Add items above to calculate lumber sticks and check against local inventory.</p>`;
-        lastCalculatedDemand = { count8: 0, count10: 0, count12: 0, count2x4: 0, count2x6U: 0, count2x6T8: 0, count2x6T10: 0, sheetsPly: 0 };
-        return;
+      const optContainer = document.getElementById('optOutput');
+      if (cutItems.length === 0) { 
+        optContainer.innerHTML = `<p style="color: var(--text-muted);">Add items to calculate layout.</p>`; 
+        lastCalculatedDemand = { count8: 0, count10: 0, count12: 0, count2x4: 0, count2x6U: 0, count2x6T8: 0, count2x6T10: 0, sheetsPly: 0 }; 
+        return; 
       }
 
       let groups = { '2x12': [], '2x4_U': [], '2x6_U': [], '2x6_T8': [], '2x6_T10': [] };
-      let plyPieces = []; // Will store { mark, width, length }
+      let plyPieces = [];
 
       cutItems.forEach(item => {
-        if (groups[item.materialCat]) {
+        if (groups[item.materialCat]) { 
+          for (let i = 0; i < item.qty; i++) { groups[item.materialCat].push({ mark: item.mark, length: item.cutLength, desc: item.desc }); } 
+        } 
+        else if (item.materialCat === 'Ply') { 
           for (let i = 0; i < item.qty; i++) {
-            groups[item.materialCat].push({ mark: item.mark, length: item.cutLength, desc: item.desc });
-          }
-        } else if (item.materialCat === 'Ply') {
-          for (let i = 0; i < item.qty; i++) {
-            // Pre-split lengths > 96" for the rip-strip calculation
             let remainingLen = item.cutLength;
             while(remainingLen > PLYWOOD_LENGTH) {
               plyPieces.push({ mark: item.mark, width: item.width, length: PLYWOOD_LENGTH });
               remainingLen -= PLYWOOD_LENGTH;
             }
-            if(remainingLen > 0) {
-              plyPieces.push({ mark: item.mark, width: item.width, length: remainingLen });
-            }
+            if(remainingLen > 0) plyPieces.push({ mark: item.mark, width: item.width, length: remainingLen });
           }
         }
       });
 
-      // ---- 1D Packer for Lumber ----
       function packSticks(pieces, allowedLengths) {
-        pieces.sort((a, b) => b.length - a.length);
-        let unassigned = [...pieces];
-        let nestedSticks = [];
-
+        pieces.sort((a, b) => b.length - a.length); let unassigned = [...pieces]; let nestedSticks = [];
         while (unassigned.length > 0) {
-          let currentPiece = unassigned.shift();
-          let currentCuts = [currentPiece];
-          let currentUsedLength = currentPiece.length;
-
-          let maxLen = Math.max(...allowedLengths);
-          let i = 0;
+          let currentPiece = unassigned.shift(); let currentCuts = [currentPiece]; let currentUsedLength = currentPiece.length;
+          let maxLen = Math.max(...allowedLengths); let i = 0;
           while (i < unassigned.length) {
             let candidate = unassigned[i];
-            if (currentUsedLength + SAW_KERF + candidate.length <= maxLen) {
-              currentCuts.push(candidate);
-              currentUsedLength += (SAW_KERF + candidate.length);
-              unassigned.splice(i, 1);
-            } else { i++; }
+            if (currentUsedLength + SAW_KERF + candidate.length <= maxLen) { currentCuts.push(candidate); currentUsedLength += (SAW_KERF + candidate.length); unassigned.splice(i, 1); } else { i++; }
           }
-
-          let chosenStock = maxLen;
-          let sortedLengths = [...allowedLengths].sort((a,b)=>a-b);
-          for (let L of sortedLengths) {
-            if (currentUsedLength <= L) { chosenStock = L; break; }
-          }
-          
-          nestedSticks.push({
-            stockLength: chosenStock,
-            used: currentUsedLength,
-            remaining: chosenStock - currentUsedLength,
-            isScrap: (chosenStock - currentUsedLength) < SCRAP_THRESHOLD,
-            cuts: currentCuts
-          });
+          let chosenStock = maxLen; allowedLengths.sort((a,b)=>a-b);
+          for (let L of allowedLengths) { if (currentUsedLength <= L) { chosenStock = L; break; } }
+          nestedSticks.push({ stockLength: chosenStock, used: currentUsedLength, remaining: chosenStock - currentUsedLength, isScrap: (chosenStock - currentUsedLength) < SCRAP_THRESHOLD, cuts: currentCuts });
         }
         return nestedSticks;
       }
@@ -853,116 +1120,63 @@
       let sticks2x6T10 = packSticks(groups['2x6_T10'], [120.0]); 
 
       let count8 = 0, count10 = 0, count12 = 0;
-      sticks2x12.forEach(s => {
-        if (s.stockLength === 96.0) count8++;
-        else if (s.stockLength === 120.0) count10++;
-        else count12++;
-      });
+      sticks2x12.forEach(s => { if (s.stockLength === 96.0) count8++; else if (s.stockLength === 120.0) count10++; else count12++; });
       
-      // ---- 2D Rip-Strip Packer for Plywood ----
-      let plyStrips = []; 
-      let plyGroups = {};
-      plyPieces.forEach(p => {
-        let wKey = p.width.toFixed(4);
-        if (!plyGroups[wKey]) plyGroups[wKey] = [];
-        plyGroups[wKey].push(p);
-      });
+      let plyStrips = []; let plyGroups = {};
+      plyPieces.forEach(p => { let wKey = p.width.toFixed(4); if (!plyGroups[wKey]) plyGroups[wKey] = []; plyGroups[wKey].push(p); });
 
-      // 1. Pack pieces into 96" long strips (by exact width)
       for (let wKey in plyGroups) {
-        let pieces = plyGroups[wKey];
-        pieces.sort((a, b) => b.length - a.length);
-        let unassigned = [...pieces];
+        let pieces = plyGroups[wKey]; pieces.sort((a, b) => b.length - a.length); let unassigned = [...pieces];
         while (unassigned.length > 0) {
-          let currentPiece = unassigned.shift();
-          let currentCuts = [currentPiece];
-          let currentUsedLength = currentPiece.length;
-
+          let currentPiece = unassigned.shift(); let currentCuts = [currentPiece]; let currentUsedLength = currentPiece.length;
           let i = 0;
           while (i < unassigned.length) {
             let candidate = unassigned[i];
-            if (currentUsedLength + SAW_KERF + candidate.length <= PLYWOOD_LENGTH) {
-              currentCuts.push(candidate);
-              currentUsedLength += (SAW_KERF + candidate.length);
-              unassigned.splice(i, 1);
-            } else { i++; }
+            if (currentUsedLength + SAW_KERF + candidate.length <= PLYWOOD_LENGTH) { currentCuts.push(candidate); currentUsedLength += (SAW_KERF + candidate.length); unassigned.splice(i, 1); } else { i++; }
           }
-          plyStrips.push({
-            width: parseFloat(wKey),
-            usedLength: currentUsedLength,
-            remainingLength: PLYWOOD_LENGTH - currentUsedLength,
-            cuts: currentCuts
-          });
+          plyStrips.push({ width: parseFloat(wKey), usedLength: currentUsedLength, remainingLength: PLYWOOD_LENGTH - currentUsedLength, cuts: currentCuts });
         }
       }
 
-      // 2. Pack Strips into 48" wide sheets
       plyStrips.sort((a, b) => b.width - a.width);
-      let plySheets = [];
-      let unassignedStrips = [...plyStrips];
-
+      let plySheets = []; let unassignedStrips = [...plyStrips];
       while(unassignedStrips.length > 0) {
-        let currentStrip = unassignedStrips.shift();
-        let currentSheetStrips = [currentStrip];
-        let currentUsedWidth = currentStrip.width;
-
+        let currentStrip = unassignedStrips.shift(); let currentSheetStrips = [currentStrip]; let currentUsedWidth = currentStrip.width;
         let i = 0;
         while (i < unassignedStrips.length) {
           let candidateStrip = unassignedStrips[i];
-          if (currentUsedWidth + SAW_KERF + candidateStrip.width <= PLYWOOD_WIDTH) {
-            currentSheetStrips.push(candidateStrip);
-            currentUsedWidth += (SAW_KERF + candidateStrip.width);
-            unassignedStrips.splice(i, 1);
-          } else { i++; }
+          if (currentUsedWidth + SAW_KERF + candidateStrip.width <= PLYWOOD_WIDTH) { currentSheetStrips.push(candidateStrip); currentUsedWidth += (SAW_KERF + candidateStrip.width); unassignedStrips.splice(i, 1); } else { i++; }
         }
-        plySheets.push({
-          usedWidth: currentUsedWidth,
-          remainingWidth: PLYWOOD_WIDTH - currentUsedWidth,
-          strips: currentSheetStrips
-        });
+        plySheets.push({ usedWidth: currentUsedWidth, remainingWidth: PLYWOOD_WIDTH - currentUsedWidth, strips: currentSheetStrips });
       }
 
       const sheetsPly = plySheets.length;
       lastCalculatedDemand = { count8, count10, count12, count2x4: sticks2x4.length, count2x6U: sticks2x6U.length, count2x6T8: sticks2x6T8.length, count2x6T10: sticks2x6T10.length, sheetsPly };
 
-      // ---- Shortage UI Render ----
-      let inv8 = parseInt(localStorage.getItem('shop_inv_8')) || 0;
-      let inv10 = parseInt(localStorage.getItem('shop_inv_10')) || 0;
-      let inv12 = parseInt(localStorage.getItem('shop_inv_12')) || 0;
-      let invPly = parseInt(localStorage.getItem('shop_inv_ply')) || 0;
-      let inv2x4U = parseInt(localStorage.getItem('shop_inv_2x4x8_u')) || 0;
-      let inv2x6U = parseInt(localStorage.getItem('shop_inv_2x6x14_u')) || 0;
-      let inv2x6T8 = parseInt(localStorage.getItem('shop_inv_2x6x8_t')) || 0;
-      let inv2x6T10 = parseInt(localStorage.getItem('shop_inv_2x6x10_t')) || 0;
-
-      function renderLine(qty, label, inventoryCount) {
+      function renderLine(qty, label, invCount) {
          if (qty === 0) return '';
-         let warn = (qty > inventoryCount) ? `<span class="shortage-warn">⚠️ Shortage: Need ${qty}, have ${inventoryCount} in stock.</span>` : `<span style="color:var(--success); font-size:0.8rem; margin-left:8px;">(In Stock)</span>`;
+         let warn = (qty > invCount) ? `<span class="shortage-warn">⚠️ Need ${qty}, have ${invCount}</span>` : `<span style="color:var(--success); font-size:0.8rem; margin-left:8px;">(In Stock)</span>`;
          return `• <strong>${qty}x</strong> ${label} ${warn}<br>`;
       }
 
-      let html = `<div style="margin-bottom: 12px;">
-        <span style="font-size: 1rem; color: var(--accent); font-weight: bold;">Lumber Pull Required vs Inventory:</span>
-        <div style="margin-top: 4px; line-height: 1.6;">
-          ${renderLine(count8, "8' 2x12", inv8)}
-          ${renderLine(count10, "10' 2x12", inv10)}
-          ${renderLine(count12, "12' 2x12", inv12)}
-          ${renderLine(sticks2x4.length, "8' 2x4 Untreated", inv2x4U)}
-          ${renderLine(sticks2x6U.length, "14' 2x6 Untreated", inv2x6U)}
-          ${renderLine(sticks2x6T8.length, "8' 2x6 Treated", inv2x6T8)}
-          ${renderLine(sticks2x6T10.length, "10' 2x6 Treated", inv2x6T10)}
-          ${renderLine(sheetsPly, "4'x8' 3/4\" Plywood", invPly)}
-        </div>
-      </div>`;
+      let html = `<div style="margin-bottom: 12px;"><span style="color: var(--accent); font-weight: bold;">Lumber Pull Required vs Inventory:</span><div style="margin-top: 4px; line-height: 1.6;">
+          ${renderLine(count8, "8' 2x12", parseInt(localStorage.getItem('inv8'))||0)}
+          ${renderLine(count10, "10' 2x12", parseInt(localStorage.getItem('inv10'))||0)}
+          ${renderLine(count12, "12' 2x12", parseInt(localStorage.getItem('inv12'))||0)}
+          ${renderLine(sticks2x4.length, "8' 2x4 (U)", parseInt(localStorage.getItem('inv2x4x8U'))||0)}
+          ${renderLine(sticks2x6U.length, "14' 2x6 (U)", parseInt(localStorage.getItem('inv2x6x14U'))||0)}
+          ${renderLine(sticks2x6T8.length, "8' 2x6 (T)", parseInt(localStorage.getItem('inv2x6x8T'))||0)}
+          ${renderLine(sticks2x6T10.length, "10' 2x6 (T)", parseInt(localStorage.getItem('inv2x6x10T'))||0)}
+          ${renderLine(sheetsPly, "4'x8' 3/4\" Ply", parseInt(localStorage.getItem('invPly'))||0)}
+        </div></div>`;
 
       function renderStickHTML(title, stickArray) {
         if (stickArray.length === 0) return '';
         let out = `<strong style="color: var(--accent); display:block; margin: 10px 0 6px 0;">${title} Layout:</strong>`;
         stickArray.forEach((s, idx) => {
-          let name = (s.stockLength / 12) + "' Stock";
+          let name = (s.stockLength / 12) + "'";
           const cutListStr = s.cuts.map(c => `<strong>${toFraction(c.length)}</strong> [${c.mark}]`).join(' + ');
-          const dropStatus = s.isScrap ? `<span class="scrap-tag">Drop: ${toFraction(s.remaining)} (Scrap)</span>` 
-                                       : `<span class="reusable-tag">Drop: ${toFraction(s.remaining)}</span>`;
+          const dropStatus = s.isScrap ? `<span class="scrap-tag">Drop: ${toFraction(s.remaining)} (Scrap)</span>` : `<span class="reusable-tag">Drop: ${toFraction(s.remaining)}</span>`;
           out += `<div class="nesting-card"><strong>Stick #${idx + 1} (${name}):</strong> ${cutListStr} <span style="float: right;">${dropStatus}</span></div>`;
         });
         return out;
@@ -970,57 +1184,231 @@
 
       function renderPlywoodHTML() {
         if (plySheets.length === 0) return '';
-        let out = `<strong style="color: var(--accent); display:block; margin: 10px 0 6px 0;">3/4" Plywood Sheets (Rip & Strip Layout):</strong>`;
+        let out = `<strong style="color: var(--accent); display:block; margin: 10px 0 6px 0;">3/4" Ply Layout:</strong>`;
         plySheets.forEach((sheet, idx) => {
           let stripsHTML = '';
           sheet.strips.forEach(strip => {
             const cutListStr = strip.cuts.map(c => `<strong>${toFraction(c.length)}</strong> [${c.mark}]`).join(' + ');
-            stripsHTML += `<div class="sheet-rip">Rip ${toFraction(strip.width)}" Strip: ${cutListStr} <span style="float: right; color: var(--text-muted); font-size: 0.8rem;">Len Drop: ${toFraction(strip.remainingLength)}"</span></div>`;
+            stripsHTML += `<div class="sheet-rip">Rip ${toFraction(strip.width)}" Strip: ${cutListStr}</div>`;
           });
-          out += `<div class="nesting-card">
-                    <strong>Sheet #${idx + 1}:</strong> <span style="float: right; color: var(--danger); font-size: 0.85rem; font-weight: bold;">Width Drop: ${toFraction(sheet.remainingWidth)}" (Scrap)</span>
-                    <div style="margin-top: 6px;">${stripsHTML}</div>
-                  </div>`;
+          out += `<div class="nesting-card"><strong>Sheet #${idx + 1}:</strong> <div style="margin-top: 6px;">${stripsHTML}</div></div>`;
         });
         return out;
       }
 
-      html += renderStickHTML('2x12 (Box Openings)', sticks2x12);
-      html += renderStickHTML('2x4 Untreated (Slab Forms)', sticks2x4);
-      html += renderStickHTML('2x6 Untreated (Ledges/Forms)', sticks2x6U);
-      html += renderStickHTML('2x6 Treated (8\')', sticks2x6T8);
-      html += renderStickHTML('2x6 Treated (10\')', sticks2x6T10);
-      html += renderPlywoodHTML();
+      html += renderStickHTML('2x12 Layout', sticks2x12) + renderStickHTML('2x4 Untreated', sticks2x4) + renderStickHTML('2x6 Untreated', sticks2x6U) + renderStickHTML('2x6 Treated', [...sticks2x6T8, ...sticks2x6T10]) + renderPlywoodHTML();
       optContainer.innerHTML = html;
     }
 
+    function deductLumber() {
+      if (cutItems.length === 0) return alert('No cuts to deduct.');
+      const map = [
+        ['inv8', lastCalculatedDemand.count8],
+        ['inv10', lastCalculatedDemand.count10],
+        ['inv12', lastCalculatedDemand.count12],
+        ['invPly', lastCalculatedDemand.sheetsPly],
+        ['inv2x4x8U', lastCalculatedDemand.count2x4],
+        ['inv2x6x14U', lastCalculatedDemand.count2x6U],
+        ['inv2x6x8T', lastCalculatedDemand.count2x6T8],
+        ['inv2x6x10T', lastCalculatedDemand.count2x6T10]
+      ];
+      map.forEach(([key, demand]) => {
+        let current = parseInt(localStorage.getItem(key)) || 0;
+        localStorage.setItem(key, Math.max(0, current - demand).toString());
+      });
+      reloadAll(); optimizeStock();
+      alert('Cut list deducted from inventory rack successfully.');
+    }
+
+    // ---- Tab 2: Dividers ----
+    function addDividerSize() {
+      const s=document.getElementById('divStyle').value, l=parseFloat(document.getElementById('divSizeL').value);
+      if(!l) return;
+      divData.push({id:Date.now(), style:s, len:l, g:0, svc:0, mk:0});
+      saveDiv();
+    }
+    function saveDiv() { localStorage.setItem('divData', JSON.stringify(divData)); renderDividers(); }
+    function renderDividers() {
+      ['45°','22.5°','Butt','Ship Lap'].forEach(style => {
+        let tb = document.querySelector(`.div-table[data-style="${style}"] tbody`);
+        tb.innerHTML='';
+        divData.filter(d=>d.style===style).sort((a,b)=>a.len-b.len).forEach(d => {
+          tb.innerHTML += `<tr><td>${d.len}"</td><td>${d.g}</td><td>${d.svc}</td><td>${d.mk}</td>
+          <td class="no-print">
+            <button class="btn btn-sm btn-success" onclick="adjDiv(${d.id},'g',1)">G</button>
+            <button class="btn btn-sm btn-warning" onclick="adjDiv(${d.id},'svc',1)">S</button>
+            <button class="btn btn-sm btn-info" onclick="adjDiv(${d.id},'mk',1)">M</button>
+            <button class="btn btn-sm btn-danger" onclick="divData=divData.filter(x=>x.id!==${d.id}); saveDiv();">X</button>
+          </td></tr>`;
+        });
+      });
+    }
+    function adjDiv(id, prop, val) { let d=divData.find(x=>x.id===id); if(d){ d[prop]+=val; saveDiv(); } }
+    
+    function calcCombo() {
+      let t = parseFloat(document.getElementById('comboTarget').value);
+      if(!t) return;
+      document.getElementById('comboResult').innerText = `Calculation: Need ${t}" total. Review available inventory to stack.`;
+    }
+
+    // ---- Tab 3: Rebar Scrap & Custom Steel ----
+    function addRebarScrap() {
+      let sz=document.getElementById('scrapSize').value, l=parseFloat(document.getElementById('scrapLen').value), q=parseInt(document.getElementById('scrapQty').value)||1;
+      if(!l) return;
+      let e=scrapData.find(x=>x.sz===sz && x.l===l);
+      if(e) e.q+=q; else scrapData.push({id:Date.now(), sz, l, q});
+      saveScrap();
+    }
+    
+    function saveScrap() { localStorage.setItem('scrapData', JSON.stringify(scrapData)); renderScrap(); }
+    
+    function renderScrap() {
+      let tb=document.getElementById('rbScrapTbody'); tb.innerHTML='';
+      scrapData.sort((a,b)=>a.sz.localeCompare(b.sz) || b.l-a.l).forEach(s => {
+        tb.innerHTML += `<tr><td>${s.sz}</td><td>${s.l}"</td><td>${s.q}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="scrapData=scrapData.filter(x=>x.id!==${s.id}); saveScrap();">X</button></td></tr>`;
+      });
+    }
+    
+    function deductRebar() {
+      let sz = document.getElementById('useRbSize').value;
+      let lf = parseFloat(document.getElementById('useRbLF').value);
+      if(!lf) return alert('Enter linear footage used.');
+
+      let stickLenLF = 20;
+      let sticksNeeded = Math.ceil(lf / stickLenLF);
+      let totalPulled = sticksNeeded * stickLenLF;
+      let dropLF = totalPulled - lf;
+      
+      let k = 'rbF' + sz.replace('#','');
+      let currentStock = parseInt(localStorage.getItem(k)) || 0;
+      
+      if (sticksNeeded > currentStock) {
+        if(!confirm(`Warning: Need ${sticksNeeded} sticks of ${sz}, but only have ${currentStock} in stock. Deduct anyway?`)) {
+          return;
+        }
+      }
+      
+      adj(k, -sticksNeeded);
+      
+      let msg = `Deducted ${sticksNeeded} full 20' sticks of ${sz}.`;
+      
+      if (dropLF > 0) {
+        let dropInches = dropLF * 12;
+        let existing = scrapData.find(x => x.sz === sz && x.l === dropInches);
+        if(existing) { existing.q += 1; } else { scrapData.push({id: Date.now(), sz: sz, l: dropInches, q: 1}); }
+        saveScrap();
+        msg += `\nAuto-added 1 piece of ${dropInches}" scrap to inventory.`;
+      }
+      alert(msg);
+      document.getElementById('useRbLF').value = '';
+    }
+
+    function fabricateSteel() {
+        let type = document.getElementById('fabItem').value;
+        let qty = parseInt(document.getElementById('fabQty').value);
+        if(!qty || qty <= 0) return;
+
+        let lfPerItem = (type === 'SlabC') ? 3 : 2; 
+        let totalLF = lfPerItem * qty;
+        
+        let sticksNeeded = Math.ceil(totalLF / 20);
+        let dropLF = (sticksNeeded * 20) - totalLF;
+        let k = 'rbF3'; 
+        let currentStock = parseInt(localStorage.getItem(k)) || 0;
+        
+        if (sticksNeeded > currentStock) {
+            if(!confirm(`Warning: Need ${sticksNeeded} sticks of #3, but only have ${currentStock}. Proceed?`)) return;
+        }
+
+        adj(k, -sticksNeeded);
+        let targetKey = (type === 'SlabC') ? 'rbSlabC' : 'rbLBar';
+        adj(targetKey, qty);
+
+        let msg = `Fabricated ${qty} items.\nDeducted ${sticksNeeded} full 20' sticks of #3.`;
+        if (dropLF > 0) {
+            let dropInches = dropLF * 12;
+            let existing = scrapData.find(x => x.sz === '#3' && x.l === dropInches);
+            if(existing) { existing.q += 1; } else { scrapData.push({id: Date.now(), sz: '#3', l: dropInches, q: 1}); }
+            saveScrap();
+            msg += `\nAuto-added 1 piece of ${dropInches}" scrap to inventory.`;
+        }
+        alert(msg);
+    }
+
+    // ---- Tab 4: Hardware ----
+    function calcRigging() {
+      let w = parseFloat(document.getElementById('calcWeight').value);
+      if(!w) return;
+      let perPoint = w / 4;
+      let db = perPoint <= 2400 ? '1.2T' : '2.0T';
+      document.getElementById('riggingResult').innerText = `Req: 4x ${db} Dog Bones & 4x Half-Sphere Blockouts.`;
+    }
+    function calcHW() {
+      let perim = parseFloat(document.getElementById('calcPerim').value);
+      if(!perim) return;
+      let seals = Math.ceil(perim / 2); // 1 per 2 LF
+      document.getElementById('hwResult').innerText = `Req: 2x S-Loops, 2x D-Loops, ${seals}x Seal Plates.`;
+    }
+    function addChair() {
+      let sz=document.getElementById('chairSize').value, q=parseInt(document.getElementById('chairQty').value)||0;
+      if(!sz) return;
+      let existing = chairData.find(x => x.sz === sz);
+      if(existing) { existing.qty += q; } else { chairData.push({id:Date.now(), sz, qty:q}); }
+      saveChairs();
+    }
+    function saveChairs() { localStorage.setItem('chairData', JSON.stringify(chairData)); renderChairs(); }
+    function renderChairs() {
+      let tb=document.getElementById('chairTbody'); tb.innerHTML='';
+      chairData.forEach(c => {
+        tb.innerHTML += `<tr><td>${c.sz}"</td><td>${c.qty}</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adjChair(${c.id},10)">+10</button> <button class="btn btn-sm btn-danger" onclick="adjChair(${c.id}, -10)">-10</button></td></tr>`;
+      });
+    }
+    function adjChair(id, amt) { let c=chairData.find(x=>x.id===id); if(c){ c.qty+=amt; saveChairs(); } }
+
+    // ---- Tab 5: Concrete Volume ----
+    function calcCY() {
+      let l=parseFloat(document.getElementById('cyL').value)||0, w=parseFloat(document.getElementById('cyW').value)||0, t=parseFloat(document.getElementById('cyT').value)||0;
+      let pod=parseFloat(document.getElementById('cyPipeOD').value)||0, pl=parseFloat(document.getElementById('cyPipeL').value)||0, pq=parseInt(document.getElementById('cyPipeQty').value)||0;
+      
+      let baseVolIn = l * w * t;
+      let r = pod / 2;
+      let voidVolIn = (Math.PI * r * r * pl) * pq;
+      
+      let netIn = baseVolIn - voidVolIn;
+      let cy = netIn / 46656; // 36*36*36
+
+      document.getElementById('cyResult').innerText = `${cy.toFixed(2)} CY`;
+      document.getElementById('cyBreakdown').innerText = `Gross: ${(baseVolIn/46656).toFixed(2)} CY | Void: ${(voidVolIn/46656).toFixed(2)} CY`;
+    }
+
+    // ---- Master Share & Export ----
     async function shareOrExport() {
-      if (cutItems.length === 0) return alert('No cuts to share.');
+      let shareText = `📋 PRECAST SHOP MASTER REPORT\nGenerated: ${new Date().toLocaleDateString()}\n\n`;
       
-      let aggregatedCuts = {};
-      cutItems.forEach(item => {
-          let key = `${item.materialCat}_${item.cutLength}`;
-          if (!aggregatedCuts[key]) aggregatedCuts[key] = { materialDesc: item.material, length: item.cutLength, qty: 0 };
-          aggregatedCuts[key].qty += item.qty;
-      });
+      if(cutItems.length > 0) {
+        let aggregatedCuts = {};
+        cutItems.forEach(item => {
+            let key = `${item.materialCat}_${item.cutLength}`;
+            if (!aggregatedCuts[key]) aggregatedCuts[key] = { materialDesc: item.material, length: item.cutLength, qty: 0 };
+            aggregatedCuts[key].qty += item.qty;
+        });
 
-      let materialsObj = {};
-      Object.values(aggregatedCuts).forEach(cut => {
-          if (!materialsObj[cut.materialDesc]) materialsObj[cut.materialDesc] = [];
-          materialsObj[cut.materialDesc].push(cut);
-      });
+        let materialsObj = {};
+        Object.values(aggregatedCuts).forEach(cut => {
+            if (!materialsObj[cut.materialDesc]) materialsObj[cut.materialDesc] = [];
+            materialsObj[cut.materialDesc].push(cut);
+        });
 
-      let shareText = `📋 PRECAST SHOP MASTER CUT LIST\nGenerated: ${new Date().toLocaleDateString()}\n\n`;
-      
-      shareText += `--- CUT LIST ---\n`;
-      for (let mat in materialsObj) {
-          materialsObj[mat].sort((a,b) => b.length - a.length); 
-          materialsObj[mat].forEach(cut => {
-               shareText += `• ${mat} - ${toFeetAndInches(cut.length)} - ${cut.qty} pieces\n`;
-          });
+        shareText += `--- CUT LIST ---\n`;
+        for (let mat in materialsObj) {
+            materialsObj[mat].sort((a,b) => b.length - a.length); 
+            materialsObj[mat].forEach(cut => {
+                 shareText += `• ${mat} - ${toFeetAndInches(cut.length)} - ${cut.qty} pieces\n`;
+            });
+        }
       }
 
-      shareText += `\n--- MATERIAL PULL ---\n`;
+      shareText += `\n--- LUMBER PULL ---\n`;
       if (lastCalculatedDemand.count8 > 0) shareText += `• ${lastCalculatedDemand.count8}x 8' 2x12\n`;
       if (lastCalculatedDemand.count10 > 0) shareText += `• ${lastCalculatedDemand.count10}x 10' 2x12\n`;
       if (lastCalculatedDemand.count12 > 0) shareText += `• ${lastCalculatedDemand.count12}x 12' 2x12\n`;
@@ -1031,13 +1419,13 @@
       if (lastCalculatedDemand.sheetsPly > 0) shareText += `• ${lastCalculatedDemand.sheetsPly}x 4'x8' 3/4" Plywood\n`;
 
       if (navigator.share) {
-        try { await navigator.share({ title: 'Precast Shop Cut List', text: shareText }); } 
+        try { await navigator.share({ title: 'Precast Shop Report', text: shareText }); } 
         catch (err) { if (err.name !== 'AbortError') fallbackCopyToClipboard(shareText); }
-      } else fallbackCopyToClipboard(shareText);
+      } else { fallbackCopyToClipboard(shareText); }
     }
 
     function fallbackCopyToClipboard(text) {
-      navigator.clipboard.writeText(text).then(() => alert('Copied to clipboard! You can paste it directly into Messenger.')).catch(() => alert('Error copying.'));
+      navigator.clipboard.writeText(text).then(() => alert('Copied to clipboard!')).catch(() => alert('Error copying.'));
     }
 
     function exportCSV() {
