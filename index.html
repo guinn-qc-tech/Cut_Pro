@@ -34,6 +34,8 @@
       padding: 16px; 
       font-size: 14px; 
     }
+
+    .div-input { width: 55px; padding: 4px; background: #0f1115; border: 1px solid var(--border); color: #fff; border-radius: 4px; text-align: center; font-size: 0.9rem; }
     
     /* Header & Tabs */
     .header { 
@@ -287,8 +289,6 @@
     #imagePreview, #prodImagePreview { max-width: 100%; max-height: 180px; object-fit: contain; margin-top: 10px; display: none; }
     .print-raw { font-family: monospace; font-size: 0.8rem; height: 75px; resize: vertical; }
 
-    .div-input { width: 55px; padding: 4px; background: #0f1115; border: 1px solid var(--border); color: #fff; border-radius: 4px; text-align: center; font-size: 0.9rem; }
-
     @media print {
       body { background: #fff; color: #000; padding: 0; }
       .no-print, .btn, .tab-container { display: none !important; }
@@ -315,8 +315,8 @@
   <div class="tab-container no-print">
     <button class="tab-btn" onclick="switchTab('tab-carpentry')">1. Carpentry Engine</button>
     <button class="tab-btn" onclick="switchTab('tab-dividers')">2. Steel Dividers</button>
-    <button class="tab-btn" onclick="switchTab('tab-rebar')">3. Rebar & Custom Steel</button>
-    <button class="tab-btn active" onclick="switchTab('tab-hardware')">4. Hardware & Embeds</button>
+    <button class="tab-btn active" onclick="switchTab('tab-rebar')">3. Rebar & Custom Steel</button>
+    <button class="tab-btn" onclick="switchTab('tab-hardware')">4. Hardware & Embeds</button>
     <button class="tab-btn" onclick="switchTab('tab-concrete')">5. Concrete Volume</button>
   </div>
 
@@ -424,6 +424,7 @@
             <div class="form-group"><label>Mark</label><input type="text" id="itemMark" placeholder="e.g. MK-1"></div>
           </div>
 
+          <!-- Dynamic Sections -->
           <div id="f-window" class="f-sec" style="display:none;">
             <div class="row">
               <div class="form-group"><label>Width (In)</label><input type="number" step="0.0625" id="openW"></div>
@@ -574,32 +575,31 @@
       <div id="comboResult" style="margin-top:12px; font-weight:bold; font-size: 1.05rem; line-height: 1.5;"></div>
     </div>
   </div>
-
   <!-- ========================================== -->
   <!-- TAB 3: REBAR & CUSTOM STEEL                -->
   <!-- ========================================== -->
-  <div id="tab-rebar" class="tab-content">
+  <div id="tab-rebar" class="tab-content active">
     <div class="grid">
       <div>
         <div class="card print-target">
           <h2>Full Length Rebar Inventory (20' Sticks)</h2>
           <table id="rebarFullTable">
-            <thead><tr><th>Size</th><th>Full Sticks On-Hand</th><th class="no-print">Adj</th></tr></thead>
+            <thead><tr><th>Size</th><th>Full Sticks On-Hand</th></tr></thead>
             <tbody>
-              <tr><td>#3</td><td id="rbF3">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('rbF3',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('rbF3',-1)">-</button></td></tr>
-              <tr><td>#4</td><td id="rbF4">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('rbF4',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('rbF4',-1)">-</button></td></tr>
-              <tr><td>#5</td><td id="rbF5">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('rbF5',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('rbF5',-1)">-</button></td></tr>
-              <tr><td>#6</td><td id="rbF6">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('rbF6',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('rbF6',-1)">-</button></td></tr>
-              <tr><td>#7</td><td id="rbF7">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('rbF7',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('rbF7',-1)">-</button></td></tr>
+              <tr><td><strong>#3</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="rbF3" min="0" onchange="setDirect('rbF3', this.value)"></td></tr>
+              <tr><td><strong>#4</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="rbF4" min="0" onchange="setDirect('rbF4', this.value)"></td></tr>
+              <tr><td><strong>#5</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="rbF5" min="0" onchange="setDirect('rbF5', this.value)"></td></tr>
+              <tr><td><strong>#6</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="rbF6" min="0" onchange="setDirect('rbF6', this.value)"></td></tr>
+              <tr><td><strong>#7</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="rbF7" min="0" onchange="setDirect('rbF7', this.value)"></td></tr>
             </tbody>
           </table>
           
           <h3 style="margin-top:16px;">Custom Form Steel</h3>
           <table id="rebarCustomTable">
-            <thead><tr><th>Item</th><th>Qty On-Hand</th><th class="no-print">Adj</th></tr></thead>
+            <thead><tr><th>Item</th><th>Qty On-Hand</th></tr></thead>
             <tbody>
-              <tr><td>Slab Connectors (~3' #3)</td><td id="rbSlabC">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('rbSlabC',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('rbSlabC',-1)">-</button></td></tr>
-              <tr><td>L-Bars (Toe Reinf. ~2' #3)</td><td id="rbLBar">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('rbLBar',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('rbLBar',-1)">-</button></td></tr>
+              <tr><td>Slab Connectors (~3' #3)</td><td><input type="number" class="div-input" style="width: 80px;" id="rbSlabC" min="0" onchange="setDirect('rbSlabC', this.value)"></td></tr>
+              <tr><td>L-Bars (Toe Reinf. ~2' #3)</td><td><input type="number" class="div-input" style="width: 80px;" id="rbLBar" min="0" onchange="setDirect('rbLBar', this.value)"></td></tr>
             </tbody>
           </table>
         </div>
@@ -652,11 +652,11 @@
       </div>
     </div>
   </div>
-
+  
   <!-- ========================================== -->
   <!-- TAB 4: HARDWARE & EMBEDS                   -->
   <!-- ========================================== -->
-  <div id="tab-hardware" class="tab-content active">
+  <div id="tab-hardware" class="tab-content">
     <div class="grid">
       <div class="card print-target">
         <h2>Rigging & Hardware Inventory</h2>
@@ -777,7 +777,11 @@
       document.getElementById('invDisplay2x6x14U').innerText = localStorage.getItem('inv2x6x14U');
       
       keys.slice(8).forEach(k => { 
-        if(document.getElementById(k)) document.getElementById(k).innerText = localStorage.getItem(k); 
+        let el = document.getElementById(k);
+        if(el) {
+          if (el.tagName === 'INPUT') el.value = localStorage.getItem(k);
+          else el.innerText = localStorage.getItem(k);
+        }
       });
       
       renderDividers(); 
@@ -785,9 +789,8 @@
       renderChairs();
     }
 
-    function adj(key, amt) {
-      let v = parseInt(localStorage.getItem(key)) + amt;
-      localStorage.setItem(key, Math.max(0, v)); 
+    function setDirect(key, val) {
+      localStorage.setItem(key, Math.max(0, parseInt(val) || 0));
       reloadAll();
     }
 
@@ -1350,41 +1353,27 @@
       if (success && bestCombo) {
         let counts = {};
         bestCombo.forEach(len => { counts[len] = (counts[len] || 0) + 1; });
-        let comboStr = Object.entries(counts).map(([len, qty]) => `${qty}x <strong>${toFeetAndInches(parseFloat(len))}</strong>`).join('<br>');
+        let comboStr = Object.entries(counts).map(([len, qty]) => `${qty}x <strong>${toFeetAndInches(parseFloat(len))}</strong>`).join(' + ');
         resEl.innerHTML = `<span style="color:var(--success)">✅ Exact Stack Found:<br>${comboStr}</span>`;
       } else {
         resEl.innerHTML = `<span style="color:var(--warning)">⚠️ No exact match possible with current "Good" inventory.</span>`;
       }
     }
-
     // ---- Tab 3: Rebar Scrap & Custom Steel ----
     function addRebarScrap() {
-      let sz = document.getElementById('scrapSize').value;
-      let f = parseFloat(document.getElementById('scrapLenF').value) || 0;
-      let i = parseFloat(document.getElementById('scrapLenI').value) || 0;
-      let l = (f * 12) + i;
-      let q = parseInt(document.getElementById('scrapQty').value) || 1;
-      
-      if(l <= 0) return alert('Enter a valid length.');
-      let e = scrapData.find(x => x.sz === sz && x.l === l);
-      if(e) e.q += q; else scrapData.push({id: Date.now(), sz, l, q});
+      let sz=document.getElementById('scrapSize').value, l=parseFloat(document.getElementById('scrapLen').value), q=parseInt(document.getElementById('scrapQty').value)||1;
+      if(!l) return;
+      let e=scrapData.find(x=>x.sz===sz && x.l===l);
+      if(e) e.q+=q; else scrapData.push({id:Date.now(), sz, l, q});
       saveScrap();
-      document.getElementById('scrapLenF').value = '';
-      document.getElementById('scrapLenI').value = '';
     }
     
     function saveScrap() { localStorage.setItem('scrapData', JSON.stringify(scrapData)); renderScrap(); }
     
     function renderScrap() {
-      let tb = document.getElementById('rbScrapTbody'); 
-      tb.innerHTML = '';
-      scrapData.sort((a,b) => a.sz.localeCompare(b.sz) || b.l - a.l).forEach(s => {
-        tb.innerHTML += `<tr>
-          <td><strong>${s.sz}</strong></td>
-          <td>${toFeetAndInches(s.l)}</td>
-          <td>${s.q}</td>
-          <td class="no-print"><button class="btn btn-sm btn-danger" onclick="scrapData=scrapData.filter(x=>x.id!==${s.id}); saveScrap();">X</button></td>
-        </tr>`;
+      let tb=document.getElementById('rbScrapTbody'); tb.innerHTML='';
+      scrapData.sort((a,b)=>a.sz.localeCompare(b.sz) || b.l-a.l).forEach(s => {
+        tb.innerHTML += `<tr><td>${s.sz}</td><td>${s.l}"</td><td>${s.q}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="scrapData=scrapData.filter(x=>x.id!==${s.id}); saveScrap();">X</button></td></tr>`;
       });
     }
     
@@ -1416,7 +1405,7 @@
         let existing = scrapData.find(x => x.sz === sz && x.l === dropInches);
         if(existing) { existing.q += 1; } else { scrapData.push({id: Date.now(), sz: sz, l: dropInches, q: 1}); }
         saveScrap();
-        msg += `\nAuto-added 1 piece of ${toFeetAndInches(dropInches)} scrap to inventory.`;
+        msg += `\nAuto-added 1 piece of ${dropInches}" scrap to inventory.`;
       }
       alert(msg);
       document.getElementById('useRbLF').value = '';
@@ -1449,7 +1438,7 @@
             let existing = scrapData.find(x => x.sz === '#3' && x.l === dropInches);
             if(existing) { existing.q += 1; } else { scrapData.push({id: Date.now(), sz: '#3', l: dropInches, q: 1}); }
             saveScrap();
-            msg += `\nAuto-added 1 piece of ${toFeetAndInches(dropInches)} scrap to inventory.`;
+            msg += `\nAuto-added 1 piece of ${dropInches}" scrap to inventory.`;
         }
         alert(msg);
     }
