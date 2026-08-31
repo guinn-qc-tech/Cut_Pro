@@ -653,6 +653,9 @@
     </div>
   </div>
 
+  <!-- ========================================== -->
+  <!-- TAB 4: HARDWARE & EMBEDS                   -->
+  <!-- ========================================== -->
   <div id="tab-hardware" class="tab-content">
     <div class="grid">
       <div class="card print-target">
@@ -666,7 +669,7 @@
             <tr><td><strong>Yellow Balls (2.0T Blockout)</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="hwBlkYellow" min="0" onchange="setDirect('hwBlkYellow', this.value)"></td></tr>
             <tr><td><strong>S-Loops</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="hwSLoop" min="0" onchange="setDirect('hwSLoop', this.value)"></td></tr>
             <tr><td><strong>D-Loops</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="hwDLoop" min="0" onchange="setDirect('hwDLoop', this.value)"></td></tr>
-            <tr><td><strong>Seal Plates</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="hwSeal" min="0" onchange="setDirect('hwSeal', this.value)"></td></tr>
+            <tr><td><strong>Seal Plate Connectors</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="hwSeal" min="0" onchange="setDirect('hwSeal', this.value)"></td></tr>
             <tr><td><strong>Special Connectors/Plates</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="hwSpec" min="0" onchange="setDirect('hwSpec', this.value)"></td></tr>
             <tr><td colspan="2" style="background: #171b21; text-align: center; color: var(--accent); font-weight: bold; font-size: 0.8rem; padding: 4px;">CHAIR INVENTORY</td></tr>
             <tr><td><strong>1" Chairs</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="ch1" min="0" onchange="setDirect('ch1', this.value)"></td></tr>
@@ -690,7 +693,7 @@
 
           <h3>Hardware per Daily Run</h3>
           <div class="row">
-            <div class="form-group"><label>Panel Perimeter (LF)</label><input type="number" id="calcPerim" placeholder="Total LF"></div>
+            <div class="form-group"><label>Total Daily Perimeter (LF)</label><input type="number" id="calcPerim" placeholder="Total LF"></div>
             <div class="form-group"><label>Qty of Panels Poured</label><input type="number" id="calcPanels" value="1" min="1"></div>
             <button class="btn btn-info" onclick="calcHW()">Calculate</button>
           </div>
@@ -1452,14 +1455,15 @@
       let panels = parseInt(document.getElementById('calcPanels').value) || 1;
       if(!perim) return;
       
-      let sealsPerPanel = Math.ceil(perim / 2); // 1 per 2 LF
-      let totalSeals = sealsPerPanel * panels;
+      // 1 connector every 2 feet of total perimeter
+      let totalSeals = Math.ceil(perim / 2); 
+      // 2 loops per panel
       let totalS = 2 * panels;
       let totalD = 2 * panels;
       
-      document.getElementById('hwResult').innerText = `Daily Run Req: ${totalS}x S-Loops, ${totalD}x D-Loops, ${totalSeals}x Seal Plates.`;
+      document.getElementById('hwResult').innerText = `Daily Run Req: ${totalS}x S-Loops, ${totalD}x D-Loops, ${totalSeals}x Seal Plate Connectors.`;
     }
-    
+
     // ---- Tab 5: Concrete Volume ----
     function calcCY() {
       let l=parseFloat(document.getElementById('cyL').value)||0, w=parseFloat(document.getElementById('cyW').value)||0, t=parseFloat(document.getElementById('cyT').value)||0;
