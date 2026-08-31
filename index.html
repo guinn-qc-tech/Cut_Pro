@@ -652,23 +652,27 @@
       </div>
     </div>
   </div>
-  
-  <!-- ========================================== -->
-  <!-- TAB 4: HARDWARE & EMBEDS                   -->
-  <!-- ========================================== -->
+
   <div id="tab-hardware" class="tab-content">
     <div class="grid">
       <div class="card print-target">
-        <h2>Rigging & Hardware Inventory</h2>
+        <h2>Rigging, Hardware & Chair Inventory</h2>
         <table>
-          <thead><tr><th>Item</th><th>On-Hand</th><th class="no-print">Adj</th></tr></thead>
+          <thead><tr><th>Item</th><th>On-Hand</th></tr></thead>
           <tbody>
-            <tr><td>1.2T Dog Bones</td><td id="hwD1">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('hwD1',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('hwD1',-1)">-</button></td></tr>
-            <tr><td>2.0T Dog Bones</td><td id="hwD2">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('hwD2',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('hwD2',-1)">-</button></td></tr>
-            <tr><td>Half-Sphere Blockouts</td><td id="hwBlk">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('hwBlk',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('hwBlk',-1)">-</button></td></tr>
-            <tr><td>S-Loops</td><td id="hwSLoop">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('hwSLoop',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('hwSLoop',-1)">-</button></td></tr>
-            <tr><td>D-Loops</td><td id="hwDLoop">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('hwDLoop',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('hwDLoop',-1)">-</button></td></tr>
-            <tr><td>Seal Plates</td><td id="hwSeal">0</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adj('hwSeal',1)">+</button> <button class="btn btn-sm btn-danger" onclick="adj('hwSeal',-1)">-</button></td></tr>
+            <tr><td><strong>1.2T Dog Bones</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="hwD1" min="0" onchange="setDirect('hwD1', this.value)"></td></tr>
+            <tr><td><strong>2.0T Dog Bones</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="hwD2" min="0" onchange="setDirect('hwD2', this.value)"></td></tr>
+            <tr><td><strong>Blue Balls (1.2T Blockout)</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="hwBlkBlue" min="0" onchange="setDirect('hwBlkBlue', this.value)"></td></tr>
+            <tr><td><strong>Yellow Balls (2.0T Blockout)</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="hwBlkYellow" min="0" onchange="setDirect('hwBlkYellow', this.value)"></td></tr>
+            <tr><td><strong>S-Loops</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="hwSLoop" min="0" onchange="setDirect('hwSLoop', this.value)"></td></tr>
+            <tr><td><strong>D-Loops</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="hwDLoop" min="0" onchange="setDirect('hwDLoop', this.value)"></td></tr>
+            <tr><td><strong>Seal Plates</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="hwSeal" min="0" onchange="setDirect('hwSeal', this.value)"></td></tr>
+            <tr><td><strong>Special Connectors/Plates</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="hwSpec" min="0" onchange="setDirect('hwSpec', this.value)"></td></tr>
+            <tr><td colspan="2" style="background: #171b21; text-align: center; color: var(--accent); font-weight: bold; font-size: 0.8rem; padding: 4px;">CHAIR INVENTORY</td></tr>
+            <tr><td><strong>1" Chairs</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="ch1" min="0" onchange="setDirect('ch1', this.value)"></td></tr>
+            <tr><td><strong>2" Chairs</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="ch2" min="0" onchange="setDirect('ch2', this.value)"></td></tr>
+            <tr><td><strong>2.5" Chairs (Daylight Walls)</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="ch25" min="0" onchange="setDirect('ch25', this.value)"></td></tr>
+            <tr><td><strong>3" Chairs</strong></td><td><input type="number" class="div-input" style="width: 80px;" id="ch3" min="0" onchange="setDirect('ch3', this.value)"></td></tr>
           </tbody>
         </table>
       </div>
@@ -684,25 +688,13 @@
           </div>
           <div id="riggingResult" style="color:var(--success); font-weight:bold; margin-bottom:12px;"></div>
 
-          <h3>Hardware per Panel</h3>
+          <h3>Hardware per Daily Run</h3>
           <div class="row">
             <div class="form-group"><label>Panel Perimeter (LF)</label><input type="number" id="calcPerim" placeholder="Total LF"></div>
+            <div class="form-group"><label>Qty of Panels Poured</label><input type="number" id="calcPanels" value="1" min="1"></div>
             <button class="btn btn-info" onclick="calcHW()">Calculate</button>
           </div>
           <div id="hwResult" style="color:var(--success); font-weight:bold;"></div>
-        </div>
-
-        <div class="card print-target">
-          <h2>Chair Inventory</h2>
-          <div class="row no-print">
-            <div class="form-group"><input type="text" id="chairSize" placeholder="Size (e.g. 2.5) "></div>
-            <div class="form-group"><input type="number" id="chairQty" value="100"></div>
-            <button class="btn" onclick="addChair()">Add</button>
-          </div>
-          <table style="margin-top:8px;">
-            <thead><tr><th>Size</th><th>Count</th><th class="no-print">Adj</th></tr></thead>
-            <tbody id="chairTbody"></tbody>
-          </table>
         </div>
       </div>
     </div>
@@ -739,7 +731,8 @@
     // ---- Global State & Constants ----
     const keys = ['inv8','inv10','inv12','invPly','inv2x4x8U','inv2x6x8T','inv2x6x10T','inv2x6x14U',
                   'rbF3','rbF4','rbF5','rbF6','rbF7','rbSlabC','rbLBar',
-                  'hwD1','hwD2','hwBlk','hwSLoop','hwDLoop','hwSeal'];
+                  'hwD1','hwD2','hwBlkBlue','hwBlkYellow','hwSLoop','hwDLoop','hwSeal','hwSpec',
+                  'ch1','ch2','ch25','ch3'];
     
     let cutItems = [];
     let divData = [];
@@ -1448,31 +1441,25 @@
       let w = parseFloat(document.getElementById('calcWeight').value);
       if(!w) return;
       let perPoint = w / 4;
-      let db = perPoint <= 2400 ? '1.2T' : '2.0T';
-      document.getElementById('riggingResult').innerText = `Req: 4x ${db} Dog Bones & 4x Half-Sphere Blockouts.`;
+      let is12T = perPoint <= 2400;
+      let db = is12T ? '1.2T' : '2.0T';
+      let balls = is12T ? 'Blue Balls (1.2T)' : 'Yellow Balls (2.0T)';
+      document.getElementById('riggingResult').innerText = `Req: 4x ${db} Dog Bones & 4x ${balls}.`;
     }
+    
     function calcHW() {
       let perim = parseFloat(document.getElementById('calcPerim').value);
+      let panels = parseInt(document.getElementById('calcPanels').value) || 1;
       if(!perim) return;
-      let seals = Math.ceil(perim / 2); // 1 per 2 LF
-      document.getElementById('hwResult').innerText = `Req: 2x S-Loops, 2x D-Loops, ${seals}x Seal Plates.`;
+      
+      let sealsPerPanel = Math.ceil(perim / 2); // 1 per 2 LF
+      let totalSeals = sealsPerPanel * panels;
+      let totalS = 2 * panels;
+      let totalD = 2 * panels;
+      
+      document.getElementById('hwResult').innerText = `Daily Run Req: ${totalS}x S-Loops, ${totalD}x D-Loops, ${totalSeals}x Seal Plates.`;
     }
-    function addChair() {
-      let sz=document.getElementById('chairSize').value, q=parseInt(document.getElementById('chairQty').value)||0;
-      if(!sz) return;
-      let existing = chairData.find(x => x.sz === sz);
-      if(existing) { existing.qty += q; } else { chairData.push({id:Date.now(), sz, qty:q}); }
-      saveChairs();
-    }
-    function saveChairs() { localStorage.setItem('chairData', JSON.stringify(chairData)); renderChairs(); }
-    function renderChairs() {
-      let tb=document.getElementById('chairTbody'); tb.innerHTML='';
-      chairData.forEach(c => {
-        tb.innerHTML += `<tr><td>${c.sz}"</td><td>${c.qty}</td><td class="no-print"><button class="btn btn-sm btn-secondary" onclick="adjChair(${c.id},10)">+10</button> <button class="btn btn-sm btn-danger" onclick="adjChair(${c.id}, -10)">-10</button></td></tr>`;
-      });
-    }
-    function adjChair(id, amt) { let c=chairData.find(x=>x.id===id); if(c){ c.qty+=amt; saveChairs(); } }
-
+    
     // ---- Tab 5: Concrete Volume ----
     function calcCY() {
       let l=parseFloat(document.getElementById('cyL').value)||0, w=parseFloat(document.getElementById('cyW').value)||0, t=parseFloat(document.getElementById('cyT').value)||0;
