@@ -752,6 +752,11 @@
     const PLYWOOD_LENGTH = 96.0;
 
     // ---- Initialization & Loading ----
+    function adj(key, delta) {
+      const current = parseInt(localStorage.getItem(key)) || 0;
+      localStorage.setItem(key, Math.max(0, current + delta).toString());
+      reloadAll();
+    }
     function initInventory() {
       keys.forEach(k => { 
         if(!localStorage.getItem(k)) localStorage.setItem(k, '0'); 
@@ -976,67 +981,136 @@
     }
 
     function handleAnglePresetChange() {
-      const preset = document.getElementById('divAnglePreset').value;
-      const depth = parseFloat(document.getElementById('divFormDepth').value) || 10.5;
-      if (preset === '45') document.getElementById('divSlopeOffset').value = depth.toFixed(4);
-      else if (preset === '22.5') document.getElementById('divSlopeOffset').value = "4.375";
-      else if (preset === '78.75') document.getElementById('divSlopeOffset').value = "2.0625";
-    }
+  const preset = document.getElementById('divAnglePreset').value;
+  const depth = parseFloat(document.getElementById('divD').value) || 10.5;
+  if (preset === '45') document.getElementById('divO').value = depth.toFixed(4);
+  else if (preset === '22.5') document.getElementById('divO').value = "4.375";
+  else if (preset === '78.75') document.getElementById('divO').value = "2.0625";
+}
 
     function addCarpentry() {
-      const type = document.getElementById('itemType').value;
-      const mk = document.getElementById('itemMark').value || 'MK';
-      const q = parseInt(document.getElementById('itemQty').value)||1;
-      let gid = Date.now();
-      let origParams = { type, mk, q };
+  const type = document.getElementById('itemType').value;
+  const mark = document.getElementById('itemMark').value || 'MK';
+  const qty = parseInt(document.getElementById('itemQty').value) || 1;
+  const groupId = Date.now();
+  let origParams = { type, mark, qty };
 
-      if(type==='window'||type==='door') {
-        const w=parseFloat(document.getElementById('openW').value), h=parseFloat(document.getElementById('openH').value), d=parseFloat(document.getElementById('openD').value);
-        if(!w||!h) return alert("Enter width and height.");
-        origParams = { ...origParams, w, h, d };
+  if (type === 'window' || type === 'door') {
+    const w = parseFloat(document.getElementById('openW').value);
+    const h = parseFloat(document.getElementById('openH').value);
+    const d = parseFloat(document.getElementById('openD').value) || 10.38;
+    if (!w || !h) return alert("Enter width and height.");
+    origParams = { ...origParams, w, h, d };
 
-        cutItems.push({id:gid, mk, q, matCat:'2x12', mat:'2x12', tag:'tag-2x12', w:d, cutLength:w+3.25, desc:'Header', origParams});
-        cutItems.push({id:gid+1, mk, q, matCat:'2x12', mat:'2x12', tag:type==='window'?'tag-2x12':'tag-door', w:d, cutLength:w+(type==='window'?3.25:0.125), desc:type==='window'?'Sill':'Spreader', origParams});
-        cutItems.push({id:gid+2, mk, q:2*q, matCat:'2x12', mat:'2x12', tag:'tag-2x12', w:d, cutLength:h, desc:'Jambs', origParams});
-      } else if(type==='slab') {
-        const l=parseFloat(document.getElementById('slabL').value), w=parseFloat(document.getElementById('slabW').value);
-        const m=document.getElementById('slabMat').value, sec=parseInt(document.getElementById('slabSec').value)||1;
-        const foam=document.getElementById('slabFoam').checked;
-        if(!l||!w) return alert("Enter length and width.");
-        origParams = { ...origParams, l, w, m, sec, foam };
+    cutItems.push({
+      id: groupId, mark, qty,
+      materialCat: '2x12', material: '2x12 Ripped', tagClass: 'tag-2x12',
+      width: d, cutLength: w + HEADER_CAP_OVERAGE,
+      desc: 'Top Header (ID + 3.25")', origParams
+    });
+    cutItems.push({
+      id: groupId + 1, mark, qty,
+      materialCat: '2x12', material: '2x12 Ripped',
+      tagClass: type === 'window' ? 'tag-2x12' : 'tag-door',
+      width: d,
+      cutLength: w + (type === 'window' ? HEADER_CAP_OVERAGE : DOOR_SILL_OVERAGE),
+      desc: type === 'window' ? 'Bottom Sill (ID + 3.25")' : 'Bottom Spreader (ID + 1/8")',
+      origParams
+    });
+    cutItems.push({
+      id: groupId + 2, mark, qty: 2 * qty,
+      materialCat: '2x12', material: '2x12 Ripped', tagClass: 'tag-2x12',
+      width: d, cutLength: h,
+      desc: 'Side Jambs', origParams
+    });
 
-        let md='2x6 Untreated', wNom=5.5, tag='tag-2x6';
-        if(m==='2x4_U') { md='2x4 Untreated'; wNom=3.5; tag='tag-2x4'; } 
-        else if(m==='2x6_T8' || m==='2x6_T10') { md='2x6 Treated'; }
+  } else if (type === 'slab') {
+    const len = parseFloat(document.getElementById('slabL').value);
+    const wid = parseFloat(document.getElementById('slabW').value);
+    const mat = document.getElementById('slabMat').value;
+    const sections = parseInt(document.getElementById('slabSec').value) || 1;
+    const foam = document.getElementById('slabFoam').checked;
+    if (!len || !wid) return alert("Enter length and width.");
+    origParams = { ...origParams, len, wid, mat, sections, foam };
 
-        cutItems.push({id:gid, mk, q:2*q, matCat:m, mat:md, tag, w:wNom, cutLength:l+3.0, desc:'Long Rails (Cap)', origParams});
-        cutItems.push({id:gid+1, mk, q:2*q, matCat:m, mat:md, tag, w:wNom, cutLength:w, desc:'Short Rails', origParams});
-        
-        if(sec>1) {
-          cutItems.push({id:gid+2, mk, q:(sec-1)*2*q, matCat:m, mat:md, tag, w:wNom, cutLength:w, desc:'Divider Faces (Sandwich)', origParams});
-          let blks = Math.ceil(w/18); 
-          cutItems.push({id:gid+3, mk, q:(sec-1)*blks*q, matCat:'2x4_U', mat:'2x4 Untreated', tag:'tag-2x4', w:3.5, cutLength:5.5, desc:'Sandwich Blocks', origParams});
-        }
-        if(foam) {
-          let fl = l-8, fw = w-8;
-          document.getElementById('foamNotes').innerText += `\n* MK: ${mk} requires 1" Foam Cut: ${fl}" x ${fw}"`;
-        }
-      } else if(type==='ledge') {
-        const l=parseFloat(document.getElementById('ldgL').value), style=document.getElementById('ldgType').value;
-        const mat=document.getElementById('ledgeMaterial').value;
-        if(!l) return alert("Enter length.");
-        origParams = { ...origParams, l, style, mat };
-        let md='2x6 Untreated';
-        if(mat==='2x6_T8' || mat==='2x6_T10') md='2x6 Treated';
-        cutItems.push({id:gid, mk, q, matCat:mat, mat:md, tag:'tag-2x6', w:5.5, cutLength:l, desc:`${style} Ledge`, origParams});
-      } else if(type==='divider') {
-        const pl=parseFloat(document.getElementById('divL').value)||0, d=parseFloat(document.getElementById('divD').value)||10.5, off=parseFloat(document.getElementById('divO').value)||0;
-        let c = off>0 ? Math.sqrt(d*d + off*off) : d;
-        origParams = { ...origParams, pl, d, off };
-        cutItems.push({id:gid, mk, q, matCat:'Ply', mat:'3/4" Ply', tag:'tag-ply', w:c, cutLength:pl>0?pl:c, desc:'Sloped Divider', origParams});
-      }
-      renderCutList(); optimizeStock();
+    let matDesc = '2x6 Untreated', wNom = 5.5, tag = 'tag-2x6';
+    if (mat === '2x4_U') { matDesc = '2x4 Untreated'; wNom = 3.5; tag = 'tag-2x4'; }
+    else if (mat === '2x6_T8' || mat === '2x6_T10') { matDesc = '2x6 Treated'; }
+
+    cutItems.push({
+      id: groupId, mark, qty: 2 * qty,
+      materialCat: mat, material: matDesc, tagClass: tag,
+      width: wNom, cutLength: len + OUTSIDE_FORM_CAP,
+      desc: 'Slab Long Rails (Outside Cap)', origParams
+    });
+    cutItems.push({
+      id: groupId + 1, mark, qty: 2 * qty,
+      materialCat: mat, material: matDesc, tagClass: tag,
+      width: wNom, cutLength: wid,
+      desc: 'Slab Short Rails', origParams
+    });
+
+    if (sections > 1) {
+      cutItems.push({
+        id: groupId + 2, mark, qty: (sections - 1) * 2 * qty,
+        materialCat: mat, material: matDesc, tagClass: tag,
+        width: wNom, cutLength: wid,
+        desc: 'Slab Section Dividers (Sandwich)', origParams
+      });
+      const blocks = Math.ceil(wid / 18);
+      cutItems.push({
+        id: groupId + 3, mark, qty: (sections - 1) * blocks * qty,
+        materialCat: '2x4_U', material: '2x4 Untreated', tagClass: 'tag-2x4',
+        width: 3.5, cutLength: 5.5,
+        desc: 'Sandwich Blocks', origParams
+      });
     }
+
+    // Rebuild foam notes cleanly
+    rebuildFoamNotes();
+
+  } else if (type === 'ledge') {
+    const len = parseFloat(document.getElementById('ldgL').value);
+    const style = document.getElementById('ldgType').value;
+    const mat = document.getElementById('ledgeMaterial').value;
+    if (!len) return alert("Enter length.");
+    origParams = { ...origParams, len, style, mat };
+
+    let matDesc = '2x6 Untreated';
+    if (mat === '2x6_T8' || mat === '2x6_T10') matDesc = '2x6 Treated';
+
+    cutItems.push({
+      id: groupId, mark, qty,
+      materialCat: mat, material: matDesc, tagClass: 'tag-2x6',
+      width: 5.5, cutLength: len,
+      desc: `${style} Ledge`, origParams
+    });
+
+  } else if (type === 'divider') {
+    const panelLength = parseFloat(document.getElementById('divL').value) || 0;
+    const sideA = parseFloat(document.getElementById('divD').value) || 10.5;
+    let sideB = parseFloat(document.getElementById('divO').value) || 0;
+    const preset = document.getElementById('divAnglePreset').value;
+    if (preset === '45' && sideB === 0) sideB = sideA;
+
+    let beta = 0, sideC = sideA;
+    if (sideB > 0) {
+      beta = (Math.atan(sideB / sideA) * (180 / Math.PI)).toFixed(1);
+      sideC = Math.sqrt(sideA * sideA + sideB * sideB);
+    }
+    origParams = { ...origParams, panelLength, sideA, sideB, preset };
+
+    cutItems.push({
+      id: groupId, mark, qty,
+      materialCat: 'Ply', material: '0.75" Plywood', tagClass: 'tag-ply',
+      width: sideC, cutLength: panelLength > 0 ? panelLength : sideC,
+      desc: `Sloped Divider (Bevel ${beta}°)`, origParams
+    });
+  }
+
+  renderCutList();
+  optimizeStock();
+}
 
     function editItem(groupId) {
       const item = cutItems.find(i => i.id === groupId || i.id === groupId+1 || i.id === groupId+2 || i.id === groupId+3);
@@ -1357,21 +1431,44 @@
     }
     // ---- Tab 3: Rebar Scrap & Custom Steel ----
     function addRebarScrap() {
-      let sz=document.getElementById('scrapSize').value, l=parseFloat(document.getElementById('scrapLen').value), q=parseInt(document.getElementById('scrapQty').value)||1;
-      if(!l) return;
-      let e=scrapData.find(x=>x.sz===sz && x.l===l);
-      if(e) e.q+=q; else scrapData.push({id:Date.now(), sz, l, q});
-      saveScrap();
-    }
+  const sz = document.getElementById('scrapSize').value;
+  const feet = parseFloat(document.getElementById('scrapLenF').value) || 0;
+  const inches = parseFloat(document.getElementById('scrapLenI').value) || 0;
+  const lenInches = (feet * 12) + inches;
+  const qty = parseInt(document.getElementById('scrapQty').value) || 1;
+
+  if (lenInches <= 0) return alert('Enter a valid length.');
+
+  const existing = scrapData.find(x => x.sz === sz && x.l === lenInches);
+  if (existing) {
+    existing.q += qty;
+  } else {
+    scrapData.push({ id: Date.now(), sz, l: lenInches, q: qty });
+  }
+  saveScrap();
+  document.getElementById('scrapLenF').value = '';
+  document.getElementById('scrapLenI').value = '';
+  document.getElementById('scrapQty').value = 1;
+}
     
     function saveScrap() { localStorage.setItem('scrapData', JSON.stringify(scrapData)); renderScrap(); }
     
     function renderScrap() {
-      let tb=document.getElementById('rbScrapTbody'); tb.innerHTML='';
-      scrapData.sort((a,b)=>a.sz.localeCompare(b.sz) || b.l-a.l).forEach(s => {
-        tb.innerHTML += `<tr><td>${s.sz}</td><td>${s.l}"</td><td>${s.q}</td><td class="no-print"><button class="btn btn-sm btn-danger" onclick="scrapData=scrapData.filter(x=>x.id!==${s.id}); saveScrap();">X</button></td></tr>`;
-      });
-    }
+  const tb = document.getElementById('rbScrapTbody');
+  tb.innerHTML = '';
+  scrapData
+    .sort((a, b) => a.sz.localeCompare(b.sz) || b.l - a.l)
+    .forEach(s => {
+      tb.innerHTML += `<tr>
+        <td>${s.sz}</td>
+        <td>${toFeetAndInches(s.l)}</td>
+        <td>${s.q}</td>
+        <td class="no-print">
+          <button class="btn btn-sm btn-danger" onclick="scrapData=scrapData.filter(x=>x.id!==${s.id}); saveScrap();">X</button>
+        </td>
+      </tr>`;
+    });
+}
     
     function deductRebar() {
       let sz = document.getElementById('useRbSize').value;
