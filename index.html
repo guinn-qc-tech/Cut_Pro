@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Precast Shop Operations Engine</title>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <style>
     :root {
       --bg-dark: #121417;
@@ -34,8 +33,6 @@
       padding: 16px; 
       font-size: 14px; 
     }
-
-    .div-input { width: 55px; padding: 4px; background: #0f1115; border: 1px solid var(--border); color: #fff; border-radius: 4px; text-align: center; font-size: 0.9rem; }
     
     /* Header & Tabs */
     .header { 
@@ -231,25 +228,6 @@
     .tag-2x4 { background: #64748b; color: #fff; }
     .tag-2x6 { background: #475569; color: #fff; }
     
-    .inventory-badge { 
-      background: #11141a; 
-      border: 1px solid var(--border); 
-      border-radius: 4px; 
-      padding: 8px; 
-      text-align: center; 
-    }
-
-    .inventory-badge span { 
-      display: block; 
-      font-size: 0.75rem; 
-      color: var(--text-muted); 
-    }
-
-    .inventory-badge strong { 
-      font-size: 1.1rem; 
-      color: var(--accent); 
-    }
-    
     .nesting-card { 
       background: #13171d; 
       border: 1px solid #2d3748; 
@@ -275,19 +253,16 @@
     .reusable-tag { color: var(--success); font-size: 0.8rem; font-weight: bold; }
     .shortage-warn { color: var(--danger); font-weight: bold; font-size: 0.85rem; display: block; margin-top: 4px; }
     
-    .ocr-box { 
-      border: 2px dashed var(--border); 
-      padding: 14px; 
-      text-align: center; 
-      border-radius: 6px; 
-      cursor: pointer; 
-      margin-bottom: 12px; 
+    .measurement-canvas { 
+      border: 1px solid var(--border); 
+      width: 100%; 
+      max-width: 100%; 
+      cursor: crosshair; 
+      touch-action: none; 
       background: #13171d; 
     }
 
-    .ocr-box:hover { border-color: var(--accent); }
-    #imagePreview, #prodImagePreview { max-width: 100%; max-height: 180px; object-fit: contain; margin-top: 10px; display: none; }
-    .print-raw { font-family: monospace; font-size: 0.8rem; height: 75px; resize: vertical; }
+    .div-input { width: 55px; padding: 4px; background: #0f1115; border: 1px solid var(--border); color: #fff; border-radius: 4px; text-align: center; font-size: 0.9rem; }
 
     @media print {
       body { background: #fff; color: #000; padding: 0; font-size: 12pt; }
@@ -319,9 +294,9 @@
   </div>
 
   <div class="tab-container no-print">
-    <button class="tab-btn" onclick="switchTab('tab-carpentry')">1. Carpentry Engine</button>
+    <button class="tab-btn active" onclick="switchTab('tab-carpentry')">1. Carpentry Engine</button>
     <button class="tab-btn" onclick="switchTab('tab-dividers')">2. Steel Dividers</button>
-    <button class="tab-btn active" onclick="switchTab('tab-rebar')">3. Rebar & Custom Steel</button>
+    <button class="tab-btn" onclick="switchTab('tab-rebar')">3. Rebar & Custom Steel</button>
     <button class="tab-btn" onclick="switchTab('tab-hardware')">4. Hardware & Embeds</button>
     <button class="tab-btn" onclick="switchTab('tab-concrete')">5. Concrete Volume</button>
   </div>
@@ -329,7 +304,7 @@
   <!-- ========================================== -->
   <!-- TAB 1: CARPENTRY ENGINE                    -->
   <!-- ========================================== -->
-  <div id="tab-carpentry" class="tab-content">
+  <div id="tab-carpentry" class="tab-content active">
     <div class="grid">
       <div>
         <div class="card no-print">
@@ -365,53 +340,46 @@
 
         <div class="card no-print">
           <h2>Local Shop Lumber Inventory</h2>
-          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px;">
-            <div class="inventory-badge"><span>8' 2x12</span><strong id="invDisplay8">0</strong></div>
-            <div class="inventory-badge"><span>10' 2x12</span><strong id="invDisplay10">0</strong></div>
-            <div class="inventory-badge"><span>12' 2x12</span><strong id="invDisplay12">0</strong></div>
-            <div class="inventory-badge"><span>3/4" Ply</span><strong id="invDisplayPly">0</strong></div>
-            <div class="inventory-badge"><span>2x4x8 (U)</span><strong id="invDisplay2x4x8U">0</strong></div>
-            <div class="inventory-badge"><span>2x6x8 (T)</span><strong id="invDisplay2x6x8T">0</strong></div>
-            <div class="inventory-badge"><span>2x6x10 (T)</span><strong id="invDisplay2x6x10T">0</strong></div>
-            <div class="inventory-badge"><span>2x6x14 (U)</span><strong id="invDisplay2x6x14U">0</strong></div>
-          </div>
-          <div class="row">
-            <div class="form-group">
-              <label>Stock Type</label>
-              <select id="invSelectType">
-                <option value="inv8">8' 2x12 Stick</option>
-                <option value="inv10">10' 2x12 Stick</option>
-                <option value="inv12">12' 2x12 Stick</option>
-                <option value="invPly">4'x8' 3/4" Plywood</option>
-                <option value="inv2x4x8U">2x4x8 Untreated</option>
-                <option value="inv2x6x8T">2x6x8 Treated</option>
-                <option value="inv2x6x10T">2x6x10 Treated</option>
-                <option value="inv2x6x14U">2x6x14 Untreated</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Adjust Count (+/-)</label>
-              <input type="number" id="invCountInput" placeholder="e.g. 10 or -2">
-            </div>
-          </div>
-          <div class="row">
-            <button class="btn btn-secondary btn-block" onclick="updateInventoryDirect()">Update Stock</button>
-            <button class="btn btn-success btn-block" onclick="deductCutListFromInventory()">Deduct List from Stock</button>
-          </div>
+          <table style="margin-bottom: 12px; width: 100%;">
+            <thead><tr><th>Material</th><th>Stock</th><th>Material</th><th>Stock</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>8' 2x12</strong></td><td><input type="number" class="div-input" style="width: 70px;" id="inv8" min="0" onchange="setDirect('inv8', this.value)"></td>
+                <td><strong>2x4x8 (U)</strong></td><td><input type="number" class="div-input" style="width: 70px;" id="inv2x4x8U" min="0" onchange="setDirect('inv2x4x8U', this.value)"></td>
+              </tr>
+              <tr>
+                <td><strong>10' 2x12</strong></td><td><input type="number" class="div-input" style="width: 70px;" id="inv10" min="0" onchange="setDirect('inv10', this.value)"></td>
+                <td><strong>2x6x8 (T)</strong></td><td><input type="number" class="div-input" style="width: 70px;" id="inv2x6x8T" min="0" onchange="setDirect('inv2x6x8T', this.value)"></td>
+              </tr>
+              <tr>
+                <td><strong>12' 2x12</strong></td><td><input type="number" class="div-input" style="width: 70px;" id="inv12" min="0" onchange="setDirect('inv12', this.value)"></td>
+                <td><strong>2x6x10 (T)</strong></td><td><input type="number" class="div-input" style="width: 70px;" id="inv2x6x10T" min="0" onchange="setDirect('inv2x6x10T', this.value)"></td>
+              </tr>
+              <tr>
+                <td><strong>3/4" Plywood</strong></td><td><input type="number" class="div-input" style="width: 70px;" id="invPly" min="0" onchange="setDirect('invPly', this.value)"></td>
+                <td><strong>2x6x14 (U)</strong></td><td><input type="number" class="div-input" style="width: 70px;" id="inv2x6x14U" min="0" onchange="setDirect('inv2x6x14U', this.value)"></td>
+              </tr>
+            </tbody>
+          </table>
+          <button class="btn btn-success btn-block" onclick="deductLumber()">Deduct Cut List from Stock</button>
         </div>
 
         <div class="card no-print">
-          <h2>Carpentry Print Scanner</h2>
-          <div class="ocr-box" onclick="document.getElementById('fileInput').click()">
-            <span>Take Photo / Upload Detail</span>
-            <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none" onchange="handleImageUpload(event, 'carpentry')">
-            <img id="imagePreview" alt="Preview" />
+          <h2>Blueprint Tap-to-Calibrate Scanner</h2>
+          <div class="row">
+            <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()" style="flex: 1;">Upload Blueprint / Photo</button>
+            <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none" onchange="handleImageLoad(event)">
           </div>
-          <div id="ocrStatus" class="status-bar"></div>
-          <div class="form-group" style="margin-top: 8px;">
-            <textarea id="rawOcrText" class="print-raw" placeholder="OCR extracted dimensions appear here..."></textarea>
+          <div style="margin-top: 12px; position: relative;">
+            <canvas id="scaleCanvas" class="measurement-canvas" style="display: none;"></canvas>
           </div>
-          <button class="btn btn-secondary btn-block" onclick="parseOcrTextToInputs()">Auto-Fill From Scanned Text</button>
+          <div id="canvasControls" style="display: none; margin-top: 12px;">
+            <div class="row">
+              <button class="btn btn-warning" id="btnCalibrate" onclick="setMode('calibrate')">1. Set Scale (Tap 2 Points)</button>
+              <button class="btn btn-info" id="btnMeasure" onclick="setMode('measure')">2. Measure (Tap 2 Points)</button>
+            </div>
+            <div id="measureResult" style="margin-top: 12px; font-weight: bold; font-size: 1.1rem; color: var(--success); text-align: center;">Scale not set.</div>
+          </div>
         </div>
 
         <div class="card no-print">
@@ -430,7 +398,6 @@
             <div class="form-group"><label>Mark</label><input type="text" id="itemMark" placeholder="e.g. MK-1"></div>
           </div>
 
-          <!-- Dynamic Sections -->
           <div id="f-window" class="f-sec" style="display:none;">
             <div class="row">
               <div class="form-group"><label>Width (In)</label><input type="number" step="0.0625" id="openW"></div>
@@ -581,10 +548,11 @@
       <div id="comboResult" style="margin-top:12px; font-weight:bold; font-size: 1.05rem; line-height: 1.5;"></div>
     </div>
   </div>
+
   <!-- ========================================== -->
   <!-- TAB 3: REBAR & CUSTOM STEEL                -->
   <!-- ========================================== -->
-  <div id="tab-rebar" class="tab-content active">
+  <div id="tab-rebar" class="tab-content">
     <div class="grid">
       <div>
         <div class="card print-target">
@@ -710,29 +678,53 @@
   </div>
 
   <!-- ========================================== -->
-  <!-- TAB 5: CONCRETE VOLUME                     -->
+  <!-- TAB 5: CONCRETE VOLUME & WEIGHT            -->
   <!-- ========================================== -->
   <div id="tab-concrete" class="tab-content">
     <div class="card no-print">
-      <h2>Net Yardage Calculator</h2>
-      <div class="grid-3">
-        <div class="form-group"><label>Length (In)</label><input type="number" id="cyL"></div>
-        <div class="form-group"><label>Width (In)</label><input type="number" id="cyW"></div>
-        <div class="form-group"><label>Thickness (In)</label><input type="number" id="cyT"></div>
+      <h2>Concrete Volume & Weight Calculator</h2>
+      <div class="row">
+        <div class="form-group"><label>Panel Length (Inches)</label><input type="number" id="cyL"></div>
+        <div class="form-group"><label>Panel Width (Inches)</label><input type="number" id="cyW"></div>
+        <div class="form-group"><label>Panel Thickness (Inches)</label><input type="number" id="cyT"></div>
       </div>
-      <h3>Deductions (Voids / Pipes)</h3>
-      <div class="grid-3">
+      <div class="row">
+        <div class="form-group">
+          <label>Concrete Density (LBS / CF)</label>
+          <input type="number" id="cyDensity" value="146">
+        </div>
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid var(--border); margin: 12px 0;">
+      
+      <h3>Deductions (Voids & Foam)</h3>
+      <div class="row">
         <div class="form-group"><label>Pipe OD (Inches)</label><input type="number" id="cyPipeOD"></div>
         <div class="form-group"><label>Pipe Length (Inches)</label><input type="number" id="cyPipeL"></div>
-        <div class="form-group"><label>Qty of Voids</label><input type="number" id="cyPipeQty" value="1"></div>
+        <div class="form-group"><label>Qty of Voids</label><input type="number" id="cyPipeQty" value="0" min="0"></div>
       </div>
-      <button class="btn btn-block btn-success" onclick="calcCY()">Calculate Net Cubic Yards</button>
+      <div class="row">
+        <div class="form-group"><label>Foam Length (Inches)</label><input type="number" id="cyFoamL" placeholder="e.g. 88"></div>
+        <div class="form-group"><label>Foam Width (Inches)</label><input type="number" id="cyFoamW" placeholder="e.g. 40"></div>
+        <div class="form-group"><label>Foam Thickness (In)</label><input type="number" id="cyFoamT" placeholder="e.g. 1"></div>
+      </div>
+      <button class="btn btn-block btn-success" onclick="calcCY()">Calculate Yield & Weight</button>
     </div>
     
     <div class="card print-target">
-      <h2>Volume Result</h2>
-      <div id="cyResult" style="font-size: 2rem; color: var(--accent); font-weight: bold; text-align: center; padding: 20px;">0.00 CY</div>
-      <div id="cyBreakdown" style="text-align: center; color: var(--text-muted);"></div>
+      <h2>Volume & Weight Results</h2>
+      <div class="grid">
+        <div style="background: #13171d; padding: 16px; border-radius: 6px; text-align: center; border: 1px solid #2d3748;">
+          <span style="display: block; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase;">Net Volume</span>
+          <strong id="cyResult" style="font-size: 2rem; color: var(--accent);">0.00 CY</strong>
+          <div id="cyBreakdown" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">Gross: 0.00 CY | Void: 0.00 CY</div>
+        </div>
+        <div style="background: #13171d; padding: 16px; border-radius: 6px; text-align: center; border: 1px solid #2d3748;">
+          <span style="display: block; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase;">Net Weight</span>
+          <strong id="wtResult" style="font-size: 2rem; color: var(--info);">0 LBS</strong>
+          <div id="wtBreakdown" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">Solid Weight: 0 LBS</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -746,7 +738,6 @@
     let cutItems = [];
     let divData = [];
     let scrapData = [];
-    let chairData = [];
     let lastCalculatedDemand = { count8: 0, count10: 0, count12: 0, count2x4: 0, count2x6U: 0, count2x6T8: 0, count2x6T10: 0, sheetsPly: 0 };
 
     const HEADER_CAP_OVERAGE = 3.25; 
@@ -757,33 +748,24 @@
     const PLYWOOD_WIDTH = 48.0; 
     const PLYWOOD_LENGTH = 96.0;
 
-    // ---- Initialization & Loading ----
     function adj(key, delta) {
       const current = parseInt(localStorage.getItem(key)) || 0;
       localStorage.setItem(key, Math.max(0, current + delta).toString());
       reloadAll();
     }
+
+    // ---- Initialization & Loading ----
     function initInventory() {
       keys.forEach(k => { 
         if(!localStorage.getItem(k)) localStorage.setItem(k, '0'); 
       });
       divData = JSON.parse(localStorage.getItem('divData') || '[]');
       scrapData = JSON.parse(localStorage.getItem('scrapData') || '[]');
-      chairData = JSON.parse(localStorage.getItem('chairData') || '[{"id":1,"sz":"1","qty":0},{"id":2,"sz":"2","qty":0},{"id":3,"sz":"2.5","qty":0},{"id":4,"sz":"3","qty":0}]');
       reloadAll();
     }
 
     function reloadAll() {
-      document.getElementById('invDisplay8').innerText = localStorage.getItem('inv8');
-      document.getElementById('invDisplay10').innerText = localStorage.getItem('inv10');
-      document.getElementById('invDisplay12').innerText = localStorage.getItem('inv12');
-      document.getElementById('invDisplayPly').innerText = localStorage.getItem('invPly');
-      document.getElementById('invDisplay2x4x8U').innerText = localStorage.getItem('inv2x4x8U');
-      document.getElementById('invDisplay2x6x8T').innerText = localStorage.getItem('inv2x6x8T');
-      document.getElementById('invDisplay2x6x10T').innerText = localStorage.getItem('inv2x6x10T');
-      document.getElementById('invDisplay2x6x14U').innerText = localStorage.getItem('inv2x6x14U');
-      
-      keys.slice(8).forEach(k => { 
+      keys.forEach(k => { 
         let el = document.getElementById(k);
         if(el) {
           if (el.tagName === 'INPUT') el.value = localStorage.getItem(k);
@@ -793,17 +775,11 @@
       
       renderDividers(); 
       renderScrap(); 
-      renderChairs();
     }
 
     function setDirect(key, val) {
       localStorage.setItem(key, Math.max(0, parseInt(val) || 0));
       reloadAll();
-    }
-
-    function updateInventoryDirect() {
-      adj(document.getElementById('invSelectType').value, parseInt(document.getElementById('invCountInput').value)||0);
-      document.getElementById('invCountInput').value = '';
     }
 
     function switchTab(id) {
@@ -862,13 +838,12 @@
       const backupData = {};
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key.startsWith('shop_') || key.startsWith('inv') || key.startsWith('rb') || key.startsWith('hw')) {
+        if (key.startsWith('shop_') || key.startsWith('inv') || key.startsWith('rb') || key.startsWith('hw') || key.startsWith('ch')) {
           backupData[key] = localStorage.getItem(key);
         }
       }
       backupData['divData'] = localStorage.getItem('divData');
       backupData['scrapData'] = localStorage.getItem('scrapData');
-      backupData['chairData'] = localStorage.getItem('chairData');
 
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData));
       const a = document.createElement('a');
@@ -926,55 +901,115 @@
       return finalInches > 0 || fracStr !== '' ? `${finalInches}${fracStr}"` : `0"`;
     }
 
-    function parseImperialToInches(str) {
-      if (!str) return null;
-      str = str.trim().replace(/["']/g, '');
-      if (str.includes('-')) {
-        const parts = str.split('-');
-        return (parseFloat(parts[0]) || 0) * 12 + (parseFractionString(parts[1]) || 0);
-      }
-      return parseFractionString(str);
-    }
+    // ---- Canvas Measurement Logic ----
+    let canvas, ctx, currentImage;
+    let ppx = 0; // pixels per inch
+    let canvasMode = 'none'; 
+    let tapPoints = [];
 
-    function parseFractionString(str) {
-      if (!str) return 0;
-      str = str.trim();
-      const spaceSplit = str.split(/\s+/);
-      if (spaceSplit.length === 2) {
-        const fracParts = spaceSplit[1].split('/');
-        return (parseFloat(spaceSplit[0]) || 0) + (fracParts.length === 2 ? parseFloat(fracParts[0]) / parseFloat(fracParts[1]) : 0);
-      } else if (str.includes('/')) {
-        const fracParts = str.split('/');
-        return fracParts.length === 2 ? parseFloat(fracParts[0]) / parseFloat(fracParts[1]) : 0;
-      }
-      return parseFloat(str) || 0;
-    }
-
-    async function handleImageUpload(e, target) {
+    function handleImageLoad(e) {
       const file = e.target.files[0];
-      if (!file) return;
-      const previewId = target === 'carpentry' ? 'imagePreview' : 'imagePreview';
-      const statusId = target === 'carpentry' ? 'ocrStatus' : 'ocrStatus';
-      const textId = target === 'carpentry' ? 'rawOcrText' : 'rawOcrText';
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        currentImage = new Image();
+        currentImage.onload = function() {
+          canvas = document.getElementById('scaleCanvas');
+          ctx = canvas.getContext('2d');
+          
+          const containerWidth = canvas.parentElement.clientWidth;
+          const scale = containerWidth / currentImage.width;
+          canvas.width = containerWidth;
+          canvas.height = currentImage.height * scale;
+          
+          ctx.drawImage(currentImage, 0, 0, canvas.width, canvas.height);
+          canvas.style.display = 'block';
+          document.getElementById('canvasControls').style.display = 'block';
+          
+          ppx = 0;
+          canvasMode = 'none';
+          tapPoints = [];
+          document.getElementById('measureResult').innerText = "Image loaded. Tap '1. Set Scale' to begin.";
+          document.getElementById('measureResult').style.color = "var(--text-muted)";
+          
+          canvas.onclick = handleCanvasClick;
+        }
+        currentImage.src = event.target.result;
+      }
+      reader.readAsDataURL(file);
+    }
 
-      const preview = document.getElementById(previewId);
-      preview.src = URL.createObjectURL(file); 
-      preview.style.display = 'block';
-      document.getElementById(statusId).innerText = "Analyzing print...";
+    function setMode(mode) {
+      canvasMode = mode;
+      tapPoints = [];
+      redrawImage();
+      document.getElementById('btnCalibrate').style.opacity = mode === 'calibrate' ? '1' : '0.5';
+      document.getElementById('btnMeasure').style.opacity = mode === 'measure' ? '1' : '0.5';
+      document.getElementById('measureResult').innerText = mode === 'calibrate' ? "Tap two points on a known dimension line." : "Tap two points to measure.";
+      document.getElementById('measureResult').style.color = "var(--info)";
+    }
 
-      try {
-        const worker = await Tesseract.createWorker('eng');
-        const ret = await worker.recognize(file);
-        document.getElementById(textId).value = ret.data.text;
-        document.getElementById(statusId).innerText = "OCR Complete.";
-        await worker.terminate();
-      } catch (err) { 
-        document.getElementById(statusId).innerText = "Error reading image."; 
+    function redrawImage() {
+      if(!ctx || !currentImage) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(currentImage, 0, 0, canvas.width, canvas.height);
+      if(tapPoints.length > 0) {
+        ctx.fillStyle = 'red';
+        ctx.beginPath();
+        ctx.arc(tapPoints[0].x, tapPoints[0].y, 4, 0, Math.PI*2);
+        ctx.fill();
       }
     }
 
-    function parseOcrTextToInputs() {
-      document.getElementById('ocrStatus').innerText = "OCR manual override active. Pattern rules not deployed in this version.";
+    function handleCanvasClick(e) {
+      if(canvasMode === 'none') return;
+      
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
+      
+      tapPoints.push({x, y});
+      redrawImage();
+      
+      if(tapPoints.length === 2) {
+        ctx.beginPath();
+        ctx.moveTo(tapPoints[0].x, tapPoints[0].y);
+        ctx.lineTo(tapPoints[1].x, tapPoints[1].y);
+        ctx.strokeStyle = 'red';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        const dx = tapPoints[1].x - tapPoints[0].x;
+        const dy = tapPoints[1].y - tapPoints[0].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        
+        if(canvasMode === 'calibrate') {
+          const actualInput = prompt("Enter real length of this line in inches (e.g. 120 for 10 feet):");
+          const actualInches = parseFloat(actualInput);
+          if(actualInches && actualInches > 0) {
+            ppx = dist / actualInches;
+            document.getElementById('measureResult').innerText = `Scale Set: 1 inch = ${ppx.toFixed(2)} pixels.`;
+            document.getElementById('measureResult').style.color = "var(--success)";
+          } else {
+            document.getElementById('measureResult').innerText = "Invalid scale. Try again.";
+            document.getElementById('measureResult').style.color = "var(--danger)";
+          }
+          canvasMode = 'none';
+          document.getElementById('btnCalibrate').style.opacity = '1';
+        } else if(canvasMode === 'measure') {
+          if(ppx === 0) {
+            alert("Please calibrate scale first!");
+          } else {
+            const measuredInches = dist / ppx;
+            document.getElementById('measureResult').innerText = `Measured: ${toFeetAndInches(measuredInches)}`;
+            document.getElementById('measureResult').style.color = "var(--success)";
+          }
+          tapPoints = [];
+        }
+      }
     }
 
     function toggleFormFields() {
@@ -987,160 +1022,181 @@
     }
 
     function handleAnglePresetChange() {
-  const preset = document.getElementById('divAnglePreset').value;
-  const depth = parseFloat(document.getElementById('divD').value) || 10.5;
-  if (preset === '45') document.getElementById('divO').value = depth.toFixed(4);
-  else if (preset === '22.5') document.getElementById('divO').value = "4.375";
-  else if (preset === '78.75') document.getElementById('divO').value = "2.0625";
-}
+      const preset = document.getElementById('divAnglePreset').value;
+      const depth = parseFloat(document.getElementById('divD').value) || 10.5;
+      if (preset === '45') document.getElementById('divO').value = depth.toFixed(4);
+      else if (preset === '22.5') document.getElementById('divO').value = "4.375";
+      else if (preset === '78.75') document.getElementById('divO').value = "2.0625";
+    }
 
     function addCarpentry() {
-  const type = document.getElementById('itemType').value;
-  const mark = document.getElementById('itemMark').value || 'MK';
-  const qty = parseInt(document.getElementById('itemQty').value) || 1;
-  const groupId = Date.now();
-  let origParams = { type, mark, qty };
+      const type = document.getElementById('itemType').value;
+      const mark = document.getElementById('itemMark').value || 'MK';
+      const qty = parseInt(document.getElementById('itemQty').value) || 1;
+      const groupId = Date.now();
+      let origParams = { type, mark, qty };
 
-  if (type === 'window' || type === 'door') {
-    const w = parseFloat(document.getElementById('openW').value);
-    const h = parseFloat(document.getElementById('openH').value);
-    const d = parseFloat(document.getElementById('openD').value) || 10.38;
-    if (!w || !h) return alert("Enter width and height.");
-    origParams = { ...origParams, w, h, d };
+      if (type === 'window' || type === 'door') {
+        const w = parseFloat(document.getElementById('openW').value);
+        const h = parseFloat(document.getElementById('openH').value);
+        const d = parseFloat(document.getElementById('openD').value) || 10.38;
+        if (!w || !h) return alert("Enter width and height.");
+        origParams = { ...origParams, w, h, d };
 
-    cutItems.push({
-      id: groupId, mark, qty,
-      materialCat: '2x12', material: '2x12 Ripped', tagClass: 'tag-2x12',
-      width: d, cutLength: w + HEADER_CAP_OVERAGE,
-      desc: 'Top Header (ID + 3.25")', origParams
-    });
-    cutItems.push({
-      id: groupId + 1, mark, qty,
-      materialCat: '2x12', material: '2x12 Ripped',
-      tagClass: type === 'window' ? 'tag-2x12' : 'tag-door',
-      width: d,
-      cutLength: w + (type === 'window' ? HEADER_CAP_OVERAGE : DOOR_SILL_OVERAGE),
-      desc: type === 'window' ? 'Bottom Sill (ID + 3.25")' : 'Bottom Spreader (ID + 1/8")',
-      origParams
-    });
-    cutItems.push({
-      id: groupId + 2, mark, qty: 2 * qty,
-      materialCat: '2x12', material: '2x12 Ripped', tagClass: 'tag-2x12',
-      width: d, cutLength: h,
-      desc: 'Side Jambs', origParams
-    });
+        cutItems.push({
+          id: groupId, mark, qty,
+          materialCat: '2x12', material: '2x12 Ripped', tagClass: 'tag-2x12',
+          width: d, cutLength: w + HEADER_CAP_OVERAGE,
+          desc: 'Top Header (ID + 3.25")', origParams
+        });
+        cutItems.push({
+          id: groupId + 1, mark, qty,
+          materialCat: '2x12', material: '2x12 Ripped',
+          tagClass: type === 'window' ? 'tag-2x12' : 'tag-door',
+          width: d,
+          cutLength: w + (type === 'window' ? HEADER_CAP_OVERAGE : DOOR_SILL_OVERAGE),
+          desc: type === 'window' ? 'Bottom Sill (ID + 3.25")' : 'Bottom Spreader (ID + 1/8")',
+          origParams
+        });
+        cutItems.push({
+          id: groupId + 2, mark, qty: 2 * qty,
+          materialCat: '2x12', material: '2x12 Ripped', tagClass: 'tag-2x12',
+          width: d, cutLength: h,
+          desc: 'Side Jambs', origParams
+        });
 
-  } else if (type === 'slab') {
-    const len = parseFloat(document.getElementById('slabL').value);
-    const wid = parseFloat(document.getElementById('slabW').value);
-    const mat = document.getElementById('slabMat').value;
-    const sections = parseInt(document.getElementById('slabSec').value) || 1;
-    const foam = document.getElementById('slabFoam').checked;
-    if (!len || !wid) return alert("Enter length and width.");
-    origParams = { ...origParams, len, wid, mat, sections, foam };
+      } else if (type === 'slab') {
+        const len = parseFloat(document.getElementById('slabL').value);
+        const wid = parseFloat(document.getElementById('slabW').value);
+        const mat = document.getElementById('slabMat').value;
+        const sections = parseInt(document.getElementById('slabSec').value) || 1;
+        const foam = document.getElementById('slabFoam').checked;
+        if (!len || !wid) return alert("Enter length and width.");
+        origParams = { ...origParams, len, wid, mat, sections, foam };
 
-    let matDesc = '2x6 Untreated', wNom = 5.5, tag = 'tag-2x6';
-    if (mat === '2x4_U') { matDesc = '2x4 Untreated'; wNom = 3.5; tag = 'tag-2x4'; }
-    else if (mat === '2x6_T8' || mat === '2x6_T10') { matDesc = '2x6 Treated'; }
+        let matDesc = '2x6 Untreated', wNom = 5.5, tag = 'tag-2x6';
+        if (mat === '2x4_U') { matDesc = '2x4 Untreated'; wNom = 3.5; tag = 'tag-2x4'; }
+        else if (mat === '2x6_T8' || mat === '2x6_T10') { matDesc = '2x6 Treated'; }
 
-    cutItems.push({
-      id: groupId, mark, qty: 2 * qty,
-      materialCat: mat, material: matDesc, tagClass: tag,
-      width: wNom, cutLength: len + OUTSIDE_FORM_CAP,
-      desc: 'Slab Long Rails (Outside Cap)', origParams
-    });
-    cutItems.push({
-      id: groupId + 1, mark, qty: 2 * qty,
-      materialCat: mat, material: matDesc, tagClass: tag,
-      width: wNom, cutLength: wid,
-      desc: 'Slab Short Rails', origParams
-    });
+        cutItems.push({
+          id: groupId, mark, qty: 2 * qty,
+          materialCat: mat, material: matDesc, tagClass: tag,
+          width: wNom, cutLength: len + OUTSIDE_FORM_CAP,
+          desc: 'Slab Long Rails (Outside Cap)', origParams
+        });
+        cutItems.push({
+          id: groupId + 1, mark, qty: 2 * qty,
+          materialCat: mat, material: matDesc, tagClass: tag,
+          width: wNom, cutLength: wid,
+          desc: 'Slab Short Rails', origParams
+        });
 
-    if (sections > 1) {
-      cutItems.push({
-        id: groupId + 2, mark, qty: (sections - 1) * 2 * qty,
-        materialCat: mat, material: matDesc, tagClass: tag,
-        width: wNom, cutLength: wid,
-        desc: 'Slab Section Dividers (Sandwich)', origParams
-      });
-      const blocks = Math.ceil(wid / 18);
-      cutItems.push({
-        id: groupId + 3, mark, qty: (sections - 1) * blocks * qty,
-        materialCat: '2x4_U', material: '2x4 Untreated', tagClass: 'tag-2x4',
-        width: 3.5, cutLength: 5.5,
-        desc: 'Sandwich Blocks', origParams
-      });
+        if (sections > 1) {
+          cutItems.push({
+            id: groupId + 2, mark, qty: (sections - 1) * 2 * qty,
+            materialCat: mat, material: matDesc, tagClass: tag,
+            width: wNom, cutLength: wid,
+            desc: 'Slab Section Dividers (Sandwich)', origParams
+          });
+          const blocks = Math.ceil(wid / 18);
+          cutItems.push({
+            id: groupId + 3, mark, qty: (sections - 1) * blocks * qty,
+            materialCat: '2x4_U', material: '2x4 Untreated', tagClass: 'tag-2x4',
+            width: 3.5, cutLength: 5.5,
+            desc: 'Sandwich Blocks', origParams
+          });
+        }
+        rebuildFoamNotes();
+
+      } else if (type === 'ledge') {
+        const len = parseFloat(document.getElementById('ldgL').value);
+        const style = document.getElementById('ldgType').value;
+        const mat = document.getElementById('ledgeMaterial').value;
+        if (!len) return alert("Enter length.");
+        origParams = { ...origParams, len, style, mat };
+
+        let matDesc = '2x6 Untreated';
+        if (mat === '2x6_T8' || mat === '2x6_T10') matDesc = '2x6 Treated';
+
+        cutItems.push({
+          id: groupId, mark, qty,
+          materialCat: mat, material: matDesc, tagClass: 'tag-2x6',
+          width: 5.5, cutLength: len,
+          desc: `${style} Ledge`, origParams
+        });
+
+      } else if (type === 'divider') {
+        const panelLength = parseFloat(document.getElementById('divL').value) || 0;
+        const sideA = parseFloat(document.getElementById('divD').value) || 10.5;
+        let sideB = parseFloat(document.getElementById('divO').value) || 0;
+        const preset = document.getElementById('divAnglePreset').value;
+        if (preset === '45' && sideB === 0) sideB = sideA;
+
+        let beta = 0, sideC = sideA;
+        if (sideB > 0) {
+          beta = (Math.atan(sideB / sideA) * (180 / Math.PI)).toFixed(1);
+          sideC = Math.sqrt(sideA * sideA + sideB * sideB);
+        }
+        origParams = { ...origParams, panelLength, sideA, sideB, preset };
+
+        cutItems.push({
+          id: groupId, mark, qty,
+          materialCat: 'Ply', material: '0.75" Plywood', tagClass: 'tag-ply',
+          width: sideC, cutLength: panelLength > 0 ? panelLength : sideC,
+          desc: `Sloped Divider (Bevel ${beta}°)`, origParams
+        });
+      }
+
+      renderCutList();
+      optimizeStock();
     }
-
-    // Rebuild foam notes cleanly
-    rebuildFoamNotes();
-
-  } else if (type === 'ledge') {
-    const len = parseFloat(document.getElementById('ldgL').value);
-    const style = document.getElementById('ldgType').value;
-    const mat = document.getElementById('ledgeMaterial').value;
-    if (!len) return alert("Enter length.");
-    origParams = { ...origParams, len, style, mat };
-
-    let matDesc = '2x6 Untreated';
-    if (mat === '2x6_T8' || mat === '2x6_T10') matDesc = '2x6 Treated';
-
-    cutItems.push({
-      id: groupId, mark, qty,
-      materialCat: mat, material: matDesc, tagClass: 'tag-2x6',
-      width: 5.5, cutLength: len,
-      desc: `${style} Ledge`, origParams
-    });
-
-  } else if (type === 'divider') {
-    const panelLength = parseFloat(document.getElementById('divL').value) || 0;
-    const sideA = parseFloat(document.getElementById('divD').value) || 10.5;
-    let sideB = parseFloat(document.getElementById('divO').value) || 0;
-    const preset = document.getElementById('divAnglePreset').value;
-    if (preset === '45' && sideB === 0) sideB = sideA;
-
-    let beta = 0, sideC = sideA;
-    if (sideB > 0) {
-      beta = (Math.atan(sideB / sideA) * (180 / Math.PI)).toFixed(1);
-      sideC = Math.sqrt(sideA * sideA + sideB * sideB);
-    }
-    origParams = { ...origParams, panelLength, sideA, sideB, preset };
-
-    cutItems.push({
-      id: groupId, mark, qty,
-      materialCat: 'Ply', material: '0.75" Plywood', tagClass: 'tag-ply',
-      width: sideC, cutLength: panelLength > 0 ? panelLength : sideC,
-      desc: `Sloped Divider (Bevel ${beta}°)`, origParams
-    });
-  }
-
-  renderCutList();
-  optimizeStock();
-}
 
     function editItem(groupId) {
       const item = cutItems.find(i => i.id === groupId || i.id === groupId+1 || i.id === groupId+2 || i.id === groupId+3);
       if(!item || !item.origParams) return;
       const p = item.origParams;
       
-      document.getElementById('itemType').value = p.type; toggleFormFields();
-      document.getElementById('itemMark').value = p.mk; document.getElementById('itemQty').value = p.q;
+      document.getElementById('itemType').value = p.type; 
+      toggleFormFields();
+      
+      document.getElementById('itemMark').value = p.mark || p.mk;
+      document.getElementById('itemQty').value = p.qty || p.q;
 
       if(p.type === 'window' || p.type === 'door') {
           document.getElementById('openW').value = p.w; document.getElementById('openH').value = p.h; document.getElementById('openD').value = p.d;
       } else if(p.type === 'slab') {
-          document.getElementById('slabL').value = p.l; document.getElementById('slabW').value = p.w; document.getElementById('slabMat').value = p.m; document.getElementById('slabSec').value = p.sec; document.getElementById('slabFoam').checked = p.foam;
+          document.getElementById('slabL').value = p.len || p.l; document.getElementById('slabW').value = p.wid || p.w; document.getElementById('slabMat').value = p.mat || p.m; document.getElementById('slabSec').value = p.sections || p.sec; document.getElementById('slabFoam').checked = p.foam;
       } else if(p.type === 'ledge') {
-          document.getElementById('ldgL').value = p.l; document.getElementById('ldgType').value = p.style; document.getElementById('ledgeMaterial').value = p.mat;
+          document.getElementById('ldgL').value = p.len || p.l; document.getElementById('ldgType').value = p.style; document.getElementById('ledgeMaterial').value = p.mat;
       } else if(p.type === 'divider') {
-          document.getElementById('divL').value = p.pl; document.getElementById('divD').value = p.d; document.getElementById('divO').value = p.off;
+          document.getElementById('divL').value = p.panelLength || p.pl; document.getElementById('divD').value = p.sideA || p.d; document.getElementById('divO').value = p.sideB || p.off;
       }
+      
       cutItems = cutItems.filter(i => i.origParams !== p); 
       renderCutList(); optimizeStock();
     }
 
     function clearList() { 
-      if (confirm('Clear cuts?')) { cutItems=[]; document.getElementById('foamNotes').innerText=''; renderCutList(); optimizeStock(); } 
+      if (confirm('Clear entire cut sheet?')) { 
+        cutItems = []; 
+        document.getElementById('foamNotes').innerText = ''; 
+        renderCutList(); 
+        optimizeStock(); 
+      } 
+    }
+
+    function rebuildFoamNotes() {
+      const notes = [];
+      const seen = new Set();
+      cutItems.forEach(item => {
+        if (item.origParams && item.origParams.foam && !seen.has(item.origParams)) {
+          seen.add(item.origParams);
+          const fl = (item.origParams.len || 0) - 8;
+          const fw = (item.origParams.wid || 0) - 8;
+          notes.push(`* ${item.mark} requires 1" Foam Cut: ${fl}" × ${fw}"`);
+        }
+      });
+      document.getElementById('foamNotes').innerText = notes.join('\n');
     }
 
     function renderCutList() {
@@ -1158,7 +1214,7 @@
                 <td><strong>${item.mark}</strong></td><td><strong>${item.qty}</strong></td><td><span class="tag ${item.tagClass}">${item.material}</span></td>
                 <td>${toFraction(item.width)}</td><td><strong>${toFraction(item.cutLength)}</strong></td><td>${item.desc}</td>
                 <td class="no-print">
-                  ${index === 0 ? `<button class="btn btn-warning btn-sm" onclick="editItem(${item.id})">E</button> <button class="btn btn-danger btn-sm" onclick="cutItems = cutItems.filter(i => i.origParams !== cutItems.find(x=>x.id===${item.id}).origParams); renderCutList(); optimizeStock();">X</button>` : ''}
+                  ${index === 0 ? `<button class="btn btn-warning btn-sm" onclick="editItem(${item.id})">E</button> <button class="btn btn-danger btn-sm" onclick="cutItems = cutItems.filter(i => i.origParams !== cutItems.find(x=>x.id===${item.id}).origParams); rebuildFoamNotes(); renderCutList(); optimizeStock();">X</button>` : ''}
                 </td>`;
               tbody.appendChild(tr);
           });
@@ -1429,52 +1485,53 @@
       if (success && bestCombo) {
         let counts = {};
         bestCombo.forEach(len => { counts[len] = (counts[len] || 0) + 1; });
-        let comboStr = Object.entries(counts).map(([len, qty]) => `${qty}x <strong>${toFeetAndInches(parseFloat(len))}</strong>`).join(' + ');
+        let comboStr = Object.entries(counts).map(([len, qty]) => `${qty}x <strong>${toFeetAndInches(parseFloat(len))}</strong>`).join('<br>');
         resEl.innerHTML = `<span style="color:var(--success)">✅ Exact Stack Found:<br>${comboStr}</span>`;
       } else {
         resEl.innerHTML = `<span style="color:var(--warning)">⚠️ No exact match possible with current "Good" inventory.</span>`;
       }
     }
+
     // ---- Tab 3: Rebar Scrap & Custom Steel ----
     function addRebarScrap() {
-  const sz = document.getElementById('scrapSize').value;
-  const feet = parseFloat(document.getElementById('scrapLenF').value) || 0;
-  const inches = parseFloat(document.getElementById('scrapLenI').value) || 0;
-  const lenInches = (feet * 12) + inches;
-  const qty = parseInt(document.getElementById('scrapQty').value) || 1;
+      const sz = document.getElementById('scrapSize').value;
+      const feet = parseFloat(document.getElementById('scrapLenF').value) || 0;
+      const inches = parseFloat(document.getElementById('scrapLenI').value) || 0;
+      const lenInches = (feet * 12) + inches;
+      const qty = parseInt(document.getElementById('scrapQty').value) || 1;
 
-  if (lenInches <= 0) return alert('Enter a valid length.');
+      if (lenInches <= 0) return alert('Enter a valid length.');
 
-  const existing = scrapData.find(x => x.sz === sz && x.l === lenInches);
-  if (existing) {
-    existing.q += qty;
-  } else {
-    scrapData.push({ id: Date.now(), sz, l: lenInches, q: qty });
-  }
-  saveScrap();
-  document.getElementById('scrapLenF').value = '';
-  document.getElementById('scrapLenI').value = '';
-  document.getElementById('scrapQty').value = 1;
-}
+      const existing = scrapData.find(x => x.sz === sz && x.l === lenInches);
+      if (existing) {
+        existing.q += qty;
+      } else {
+        scrapData.push({ id: Date.now(), sz, l: lenInches, q: qty });
+      }
+      saveScrap();
+      document.getElementById('scrapLenF').value = '';
+      document.getElementById('scrapLenI').value = '';
+      document.getElementById('scrapQty').value = 1;
+    }
     
     function saveScrap() { localStorage.setItem('scrapData', JSON.stringify(scrapData)); renderScrap(); }
     
     function renderScrap() {
-  const tb = document.getElementById('rbScrapTbody');
-  tb.innerHTML = '';
-  scrapData
-    .sort((a, b) => a.sz.localeCompare(b.sz) || b.l - a.l)
-    .forEach(s => {
-      tb.innerHTML += `<tr>
-        <td>${s.sz}</td>
-        <td>${toFeetAndInches(s.l)}</td>
-        <td>${s.q}</td>
-        <td class="no-print">
-          <button class="btn btn-sm btn-danger" onclick="scrapData=scrapData.filter(x=>x.id!==${s.id}); saveScrap();">X</button>
-        </td>
-      </tr>`;
-    });
-}
+      const tb = document.getElementById('rbScrapTbody');
+      tb.innerHTML = '';
+      scrapData
+        .sort((a, b) => a.sz.localeCompare(b.sz) || b.l - a.l)
+        .forEach(s => {
+          tb.innerHTML += `<tr>
+            <td>${s.sz}</td>
+            <td>${toFeetAndInches(s.l)}</td>
+            <td>${s.q}</td>
+            <td class="no-print">
+              <button class="btn btn-sm btn-danger" onclick="scrapData=scrapData.filter(x=>x.id!==${s.id}); saveScrap();">X</button>
+            </td>
+          </tr>`;
+        });
+    }
     
     function deductRebar() {
       let sz = document.getElementById('useRbSize').value;
@@ -1504,7 +1561,7 @@
         let existing = scrapData.find(x => x.sz === sz && x.l === dropInches);
         if(existing) { existing.q += 1; } else { scrapData.push({id: Date.now(), sz: sz, l: dropInches, q: 1}); }
         saveScrap();
-        msg += `\nAuto-added 1 piece of ${dropInches}" scrap to inventory.`;
+        msg += `\nAuto-added 1 piece of ${toFeetAndInches(dropInches)} scrap to inventory.`;
       }
       alert(msg);
       document.getElementById('useRbLF').value = '';
@@ -1537,7 +1594,7 @@
             let existing = scrapData.find(x => x.sz === '#3' && x.l === dropInches);
             if(existing) { existing.q += 1; } else { scrapData.push({id: Date.now(), sz: '#3', l: dropInches, q: 1}); }
             saveScrap();
-            msg += `\nAuto-added 1 piece of ${dropInches}" scrap to inventory.`;
+            msg += `\nAuto-added 1 piece of ${toFeetAndInches(dropInches)} scrap to inventory.`;
         }
         alert(msg);
     }
@@ -1558,29 +1615,57 @@
       let panels = parseInt(document.getElementById('calcPanels').value) || 1;
       if(!perim) return;
       
-      // 1 connector every 2 feet of total perimeter
       let totalSeals = Math.ceil(perim / 2); 
-      // 2 loops per panel
       let totalS = 2 * panels;
       let totalD = 2 * panels;
       
       document.getElementById('hwResult').innerText = `Daily Run Req: ${totalS}x S-Loops, ${totalD}x D-Loops, ${totalSeals}x Seal Plate Connectors.`;
     }
 
-    // ---- Tab 5: Concrete Volume ----
+    // ---- Tab 5: Concrete Volume & Weight ----
     function calcCY() {
-      let l=parseFloat(document.getElementById('cyL').value)||0, w=parseFloat(document.getElementById('cyW').value)||0, t=parseFloat(document.getElementById('cyT').value)||0;
-      let pod=parseFloat(document.getElementById('cyPipeOD').value)||0, pl=parseFloat(document.getElementById('cyPipeL').value)||0, pq=parseInt(document.getElementById('cyPipeQty').value)||0;
+      let l = parseFloat(document.getElementById('cyL').value) || 0;
+      let w = parseFloat(document.getElementById('cyW').value) || 0;
+      let t = parseFloat(document.getElementById('cyT').value) || 0;
+      let density = parseFloat(document.getElementById('cyDensity').value) || 146;
+
+      let pod = parseFloat(document.getElementById('cyPipeOD').value) || 0;
+      let pl = parseFloat(document.getElementById('cyPipeL').value) || 0;
+      let pq = parseInt(document.getElementById('cyPipeQty').value) || 0;
+
+      let fl = parseFloat(document.getElementById('cyFoamL').value) || 0;
+      let fw = parseFloat(document.getElementById('cyFoamW').value) || 0;
+      let ft = parseFloat(document.getElementById('cyFoamT').value) || 0;
       
       let baseVolIn = l * w * t;
-      let r = pod / 2;
-      let voidVolIn = (Math.PI * r * r * pl) * pq;
+      let pipeRadius = pod / 2;
+      let pipeVoidVolIn = (Math.PI * pipeRadius * pipeRadius * pl) * pq;
+      let foamVoidVolIn = fl * fw * ft;
       
-      let netIn = baseVolIn - voidVolIn;
-      let cy = netIn / 46656; // 36*36*36
+      let totalVoidIn = pipeVoidVolIn + foamVoidVolIn;
+      let netVolIn = baseVolIn - totalVoidIn;
+      
+      let grossCY = baseVolIn / 46656;
+      let totalVoidCY = totalVoidIn / 46656;
+      let netCY = netVolIn / 46656;
 
-      document.getElementById('cyResult').innerText = `${cy.toFixed(2)} CY`;
-      document.getElementById('cyBreakdown').innerText = `Gross: ${(baseVolIn/46656).toFixed(2)} CY | Void: ${(voidVolIn/46656).toFixed(2)} CY`;
+      let grossCF = baseVolIn / 1728;
+      let netCF = netVolIn / 1728;
+      
+      let solidWeight = grossCF * density;
+      let netWeight = netCF * density;
+
+      document.getElementById('cyResult').innerText = `${netCY.toFixed(2)} CY`;
+      document.getElementById('cyBreakdown').innerText = `Gross: ${grossCY.toFixed(2)} CY | Voids: ${totalVoidCY.toFixed(2)} CY`;
+      
+      document.getElementById('wtResult').innerText = `${Math.round(netWeight).toLocaleString()} LBS`;
+      
+      let weightText = `Solid Panel: ${Math.round(solidWeight).toLocaleString()} LBS`;
+      if (totalVoidIn > 0) {
+        let displacedWeight = solidWeight - netWeight;
+        weightText += ` | Displaced: -${Math.round(displacedWeight).toLocaleString()} LBS`;
+      }
+      document.getElementById('wtBreakdown').innerText = weightText;
     }
 
     // ---- Master Share & Export ----
