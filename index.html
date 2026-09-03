@@ -299,6 +299,11 @@
     </div>
   </div>
 
+  <div id="lowStockBanner" class="card no-print" style="display: none; border-color: var(--warning); background: #332b00; padding: 12px; margin-bottom: 16px;">
+    <h3 style="color: var(--warning); margin: 0 0 8px 0; font-size: 1rem;">⚠️ Low Inventory Alerts</h3>
+    <div id="lowStockList" style="font-size: 0.9rem; color: #fff; display: grid; grid-template-columns: 1fr 1fr; gap: 4px;"></div>
+  </div>
+
   <div class="tab-container no-print">
     <button class="tab-btn active" onclick="switchTab('tab-carpentry')">1. Carpentry Engine</button>
     <button class="tab-btn" onclick="switchTab('tab-dividers')">2. Steel Dividers</button>
@@ -755,6 +760,48 @@
     const PLYWOOD_WIDTH = 48.0; 
     const PLYWOOD_LENGTH = 96.0;
 
+    const stockThresholds = {
+      'inv8': { name: "8' 2x12", low: 10 },
+      'inv10': { name: "10' 2x12", low: 10 },
+      'inv12': { name: "12' 2x12", low: 10 },
+      'invPly': { name: "3/4\" Plywood", low: 5 },
+      'inv2x4x8U': { name: "8' 2x4 (U)", low: 20 },
+      'inv2x6x8T': { name: "8' 2x6 (T)", low: 15 },
+      'inv2x6x10T': { name: "10' 2x6 (T)", low: 15 },
+      'inv2x6x14U': { name: "14' 2x6 (U)", low: 15 },
+      'rbF3': { name: "#3 Rebar (20')", low: 20 },
+      'rbF4': { name: "#4 Rebar (20')", low: 20 },
+      'rbF5': { name: "#5 Rebar (20')", low: 10 },
+      'hwD1': { name: "1.2T Dog Bones", low: 25 },
+      'hwD2': { name: "2.0T Dog Bones", low: 25 },
+      'hwSLoop': { name: "S-Loops", low: 40 },
+      'hwDLoop': { name: "D-Loops", low: 40 },
+      'hwSeal': { name: "Seal Plate Connectors", low: 50 },
+      'ch2': { name: "2\" Chairs", low: 100 }
+    };
+
+    function checkLowStock() {
+      let alerts = [];
+      for (let key in stockThresholds) {
+        let current = parseInt(localStorage.getItem(key)) || 0;
+        let item = stockThresholds[key];
+        if (current <= item.low && current > 0) {
+            alerts.push(`<div><span style="color: var(--warning);">• <strong>${item.name}:</strong> ${current} left</span></div>`);
+        } else if (current === 0) {
+            alerts.push(`<div><span style="color: var(--danger);">• <strong>${item.name}:</strong> OUT</span></div>`);
+        }
+      }
+
+      const banner = document.getElementById('lowStockBanner');
+      const list = document.getElementById('lowStockList');
+      if (alerts.length > 0) {
+         list.innerHTML = alerts.join('');
+         banner.style.display = 'block';
+      } else {
+         banner.style.display = 'none';
+      }
+    }
+
     function adj(key, delta) {
       const current = parseInt(localStorage.getItem(key)) || 0;
       localStorage.setItem(key, Math.max(0, current + delta).toString());
@@ -782,6 +829,7 @@
       
       renderDividers(); 
       renderScrap(); 
+      checkLowStock(); // Triggers the warning banner update
     }
 
     function setDirect(key, val) {
