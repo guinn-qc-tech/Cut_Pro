@@ -260,12 +260,13 @@
       cursor: crosshair; 
       touch-action: none; 
       background: #13171d; 
-      
-      .loupe { 
+      filter: grayscale(100%) contrast(150%) brightness(110%);
+    }
+
+    .loupe { 
       position: absolute; width: 100px; height: 100px; border: 3px solid var(--accent); 
       border-radius: 50%; pointer-events: none; display: none; z-index: 50; 
       box-shadow: 0 4px 12px rgba(0,0,0,0.8); background-repeat: no-repeat; 
-    }
     }
 
     .div-input { width: 55px; padding: 4px; background: #0f1115; border: 1px solid var(--border); color: #fff; border-radius: 4px; text-align: center; font-size: 0.9rem; }
@@ -987,7 +988,7 @@
           document.getElementById('measureResult').innerText = "Image loaded. Tap '1. Set Scale' to begin.";
           document.getElementById('measureResult').style.color = "var(--text-muted)";
           
-          canvas.onclick = handleCanvasClick;
+          bindCanvasEvents(); // Ensures drag-loupe is active
         }
         currentImage.src = event.target.result;
       }
