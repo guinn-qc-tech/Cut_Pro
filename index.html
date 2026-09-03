@@ -260,6 +260,12 @@
       cursor: crosshair; 
       touch-action: none; 
       background: #13171d; 
+      
+      .loupe { 
+      position: absolute; width: 100px; height: 100px; border: 3px solid var(--accent); 
+      border-radius: 50%; pointer-events: none; display: none; z-index: 50; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.8); background-repeat: no-repeat; 
+    }
     }
 
     .div-input { width: 55px; padding: 4px; background: #0f1115; border: 1px solid var(--border); color: #fff; border-radius: 4px; text-align: center; font-size: 0.9rem; }
@@ -370,8 +376,9 @@
             <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()" style="flex: 1;">Upload Blueprint / Photo</button>
             <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none" onchange="handleImageLoad(event)">
           </div>
-          <div style="margin-top: 12px; position: relative;">
+          <div style="margin-top: 12px; position: relative; touch-action: none;" id="canvasWrapper">
             <canvas id="scaleCanvas" class="measurement-canvas" style="display: none;"></canvas>
+            <div id="loupe" class="loupe"></div>
           </div>
           <div id="canvasControls" style="display: none; margin-top: 12px;">
             <div class="row">
@@ -961,50 +968,62 @@
       }
     }
 
-    function handleCanvasClick(e) {
-      if(canvasMode === 'none') return;
-      
+    let isAiming = false;
+    let aimX = 0, aimY = 0;
+
+    function bindCanvasEvents() {
+      canvas.onpointerdown = (e) => { if (canvasMode !== 'none') { isAiming = true; updateLoupe(e); } };
+      canvas.onpointermove = (e) => { if (isAiming) updateLoupe(e); };
+      canvas.onpointerup = (e) => { if (isAiming) lockPoint(); };
+    }
+
+    function updateLoupe(e) {
       const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / rect.width;
       const scaleY = canvas.height / rect.height;
       
-      const x = (e.clientX - rect.left) * scaleX;
-      const y = (e.clientY - rect.top) * scaleY;
+      let cX = e.clientX; let cY = e.clientY;
+      aimX = (cX - rect.left) * scaleX; aimY = (cY - rect.top) * scaleY;
       
-      tapPoints.push({x, y});
+      const loupe = document.getElementById('loupe');
+      loupe.style.display = 'block';
+      loupe.style.left = (cX - rect.left - 50) + 'px';
+      loupe.style.top = (cY - rect.top - 130) + 'px'; // Floats above your finger
+      
+      const zoom = 2.5; // 2.5x Magnification
+      loupe.style.backgroundImage = `url(${currentImage.src})`;
+      loupe.style.backgroundSize = `${rect.width * zoom}px ${rect.height * zoom}px`;
+      loupe.style.backgroundPosition = `-${(cX - rect.left) * zoom - 50}px -${(cY - rect.top) * zoom - 50}px`;
+    }
+
+    function lockPoint() {
+      isAiming = false;
+      document.getElementById('loupe').style.display = 'none';
+      tapPoints.push({x: aimX, y: aimY});
       redrawImage();
       
       if(tapPoints.length === 2) {
-        ctx.beginPath();
-        ctx.moveTo(tapPoints[0].x, tapPoints[0].y);
-        ctx.lineTo(tapPoints[1].x, tapPoints[1].y);
-        ctx.strokeStyle = 'red';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(tapPoints[0].x, tapPoints[0].y); ctx.lineTo(tapPoints[1].x, tapPoints[1].y);
+        ctx.strokeStyle = 'red'; ctx.lineWidth = 2; ctx.stroke();
         
-        const dx = tapPoints[1].x - tapPoints[0].x;
-        const dy = tapPoints[1].y - tapPoints[0].y;
+        const dx = tapPoints[1].x - tapPoints[0].x, dy = tapPoints[1].y - tapPoints[0].y;
         const dist = Math.sqrt(dx*dx + dy*dy);
         
         if(canvasMode === 'calibrate') {
-          const actualInput = prompt("Enter real length of this line in inches (e.g. 120 for 10 feet):");
-          const actualInches = parseFloat(actualInput);
-          if(actualInches && actualInches > 0) {
-            ppx = dist / actualInches;
-            document.getElementById('measureResult').innerText = `Scale Set: 1 inch = ${ppx.toFixed(2)} pixels.`;
+          const actual = parseFloat(document.getElementById('calibInches').value);
+          if(actual > 0) {
+            ppx = dist / actual;
+            document.getElementById('measureResult').innerText = `Scale Set: 1" = ${ppx.toFixed(2)}px`;
             document.getElementById('measureResult').style.color = "var(--success)";
           } else {
-            document.getElementById('measureResult').innerText = "Invalid scale. Try again.";
+            document.getElementById('measureResult').innerText = "Error: Type actual inches first.";
             document.getElementById('measureResult').style.color = "var(--danger)";
           }
-          canvasMode = 'none';
-          document.getElementById('btnCalibrate').style.opacity = '1';
+          canvasMode = 'none'; document.getElementById('btnCalibrate').style.opacity = '1';
         } else if(canvasMode === 'measure') {
-          if(ppx === 0) {
-            alert("Please calibrate scale first!");
-          } else {
-            const measuredInches = dist / ppx;
-            document.getElementById('measureResult').innerText = `Measured: ${toFeetAndInches(measuredInches)}`;
+          if(ppx === 0) alert("Calibrate scale first!");
+          else {
+            document.getElementById('measureResult').innerText = `Measured: ${toFeetAndInches(dist / ppx)}`;
             document.getElementById('measureResult').style.color = "var(--success)";
           }
           tapPoints = [];
